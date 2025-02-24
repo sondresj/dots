@@ -3,7 +3,6 @@
     "version": "0.1.0",
     "license": "MIT",
     "exports": "./src/mod.ts",
-    "tasks": {},
     "imports": {
         "@std/assert": "jsr:@std/assert@1"
     },
@@ -19,8 +18,5 @@
             "tags": ["jsr", "recommended"],
             "exclude": ["no-explicit-any"]
         }
-    },
-    "publish": {
-        "include": ["src"]
     }
 }
