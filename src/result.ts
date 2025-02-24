@@ -45,7 +45,7 @@ export const ResultOf = <T, E>(t: T): T extends Promise<infer R> ? Promise<Resul
 }
 
 export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
-    const res = {
+    const res: Result<NonNullable<T>, E> = {
         isOk: () => true,
         switch: (cases) => cases.ok(t),
         unwrap: () => t,
@@ -63,12 +63,12 @@ export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
         [okSym]: true,
         [ofSym]: ResultOf,
         __proto__: null,
-    } satisfies Result<NonNullable<T>, E>
+    }
     return Object.freeze(res)
 }
 
 export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
-    const res = {
+    const res: Result<NonNullable<T>, E> = {
         isOk: () => false,
         switch: (cases) => cases.err(e),
         unwrap: (m) => {
@@ -88,6 +88,6 @@ export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
         [errSym]: true,
         [ofSym]: ResultOf,
         __proto__: null,
-    } satisfies Result<NonNullable<T>, E>
+    }
     return Object.freeze(res) as any
 }

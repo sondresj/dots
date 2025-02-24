@@ -1,6 +1,6 @@
-import type { Option } from './option'
-import type { Result } from './result'
-import type { Task } from './task'
+import type { Option } from './option.ts'
+import type { Result } from './result.ts'
+import type { Task } from './task.ts'
 
 export const optionSym = Symbol('$Option')
 export const someSym = Symbol('$Some')

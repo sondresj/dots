@@ -31,7 +31,7 @@ export type Option<T> = {
 export const OptionOf = <T>(t: T): Option<NonNullable<T>> => isNonNullable(t) ? Some(t) : None()
 
 export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
-    const opt = {
+    const opt: Option<NonNullable<T>> = {
         isSome: () => true,
         switch: (c) => c.some(t),
         unwrap: (_) => t,
@@ -49,33 +49,31 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
             return (yield opt) as any
         },
         __proto__: null,
-    } satisfies Option<NonNullable<T>>
+    }
     return Object.freeze(opt)
 }
 
-const _none = Object.freeze(
-    {
-        isSome: () => false,
-        switch: (c) => c.none(),
-        unwrap: (m) => {
-            throw new UnwrapOptionError(m)
-        },
-        unwrapOr: (f) => f(),
-        map: (_) => _none as any,
-        flatMap: (_) => _none as any,
-        ok: () => Err(new Error('Option was None')),
-        okOr: (f) => Err(f()),
-        done: () => Fail(new Error('Option was None')),
-        toString: () => 'None',
-        [optionSym]: true,
-        [noneSym]: true,
-        [ofSym]: OptionOf,
-        [Symbol.iterator]: function* () {
-            return (yield _none) as any
-        },
-        __proto__: null,
-    } satisfies Option<NonNullable<any>>,
-)
+const _none: Option<NonNullable<any>> = Object.freeze({
+    isSome: () => false,
+    switch: (c) => c.none(),
+    unwrap: (m) => {
+        throw new UnwrapOptionError(m)
+    },
+    unwrapOr: (f) => f(),
+    map: (_) => _none as any,
+    flatMap: (_) => _none as any,
+    ok: () => Err(new Error('Option was None')),
+    okOr: (f) => Err(f()),
+    done: () => Fail(new Error('Option was None')),
+    toString: () => 'None',
+    [optionSym]: true,
+    [noneSym]: true,
+    [ofSym]: OptionOf,
+    [Symbol.iterator]: function* () {
+        return (yield _none) as any
+    },
+    __proto__: null,
+})
 
 export const None = <T>(): Option<NonNullable<T>> => {
     return _none as any

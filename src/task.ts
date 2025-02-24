@@ -38,9 +38,8 @@ export type Task<T, E = unknown> = {
     __proto__: null
 }
 
-export const taskify = <F extends (...args: any[]) => Promise<any>, E = unknown>(f: F) => {
-    type T = ReturnType<F> extends Promise<infer T> ? T : never
-    return (...args: Parameters<F>): Task<T, E> =>
+export const taskify = <F extends (...args: any[]) => Promise<any>, E = unknown>(f: F): (...args: Parameters<F>) => Task<ReturnType<F> extends Promise<infer T> ? T : never, E> => {
+    return (...args) =>
         TaskOf((done, fail) => {
             try {
                 f(...args).then(done, fail)
@@ -50,10 +49,10 @@ export const taskify = <F extends (...args: any[]) => Promise<any>, E = unknown>
         })
 }
 
-export const TaskOf = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T>) => {
+export const TaskOf = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T>): Task<T, E> => {
     const init = isPromise(initOrPromise) ? (done: (value: T) => void, fail: (error: E) => void) => initOrPromise.then(done, fail) : initOrPromise
 
-    const task = {
+    const task: Task<T, E> = {
         map: (f) => TaskOf((done, fail) => init((val) => done(f(val!)), fail)) as any,
         flatMap: (f) => TaskOf((done, fail) => init((val) => f(val as any)[taskInitSym](done, fail), fail)),
         mapErr: (f) => TaskOf((done, fail) => init(done, (e) => fail(f(e)))) as any,
@@ -70,9 +69,9 @@ export const TaskOf = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T
             return (yield task) as any
         },
         __proto__: null,
-    } satisfies Task<T, E>
+    }
     return Object.freeze(task)
 }
 
-export const Done: <T, E = unknown>(t: T) => Task<T, E> = (t) => TaskOf((done) => done(t))
-export const Fail: <T, E>(e: E) => Task<T, E> = (e) => TaskOf((_, fail) => fail(e))
+export const Done = <T, E = unknown>(t: T): Task<T, E> => TaskOf((done) => done(t))
+export const Fail = <T, E>(e: E): Task<T, E> => TaskOf((_, fail) => fail(e))
