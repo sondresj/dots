@@ -8,6 +8,7 @@ Fully typed Do-notation
 ## TODO
 
 - tests
+- documentation
 - other useful methods
 - other useful monads (list, state, etc?)
 - ???
