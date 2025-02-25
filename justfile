@@ -8,4 +8,4 @@ check:
     deno test ./tests
 
 watch:
-    deno test ./tests --watch ./tests,./src/
+    deno test ./tests --watch

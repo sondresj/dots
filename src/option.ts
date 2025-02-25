@@ -16,6 +16,7 @@ export type Option<T> = {
     unwrapOr: (alt: () => T) => NonNullable<T>
     map: <T2>(f: (t: NonNullable<T>) => T2) => Option<NonNullable<T2>>
     flatMap: <T2>(f: (t: NonNullable<T>) => Option<NonNullable<T2>>) => Option<NonNullable<T2>>
+    zip: <T2>(t2: Option<T2>) => Option<readonly [T, T2]>
     ok: () => Result<NonNullable<T>, Error>
     okOr: <E>(f: () => E) => Result<NonNullable<T>, E>
     done: () => Task<NonNullable<T>, Error>
@@ -38,6 +39,7 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
         unwrapOr: (_) => t,
         map: (f) => OptionOf(f(t)),
         flatMap: (f) => f(t),
+        zip: (t2) => t2.map((t2) => [t, t2] as const) as any,
         ok: () => Ok(t),
         okOr: (_) => Ok(t),
         done: () => Done(t),
@@ -62,6 +64,7 @@ const _none: Option<NonNullable<any>> = Object.freeze({
     unwrapOr: (f) => f(),
     map: (_) => _none as any,
     flatMap: (_) => _none as any,
+    zip: (_) => _none as any,
     ok: () => Err(new Error('Option was None')),
     okOr: (f) => Err(f()),
     done: () => Fail(new Error('Option was None')),
