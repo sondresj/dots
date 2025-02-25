@@ -9,7 +9,7 @@ Fully typed Do-notation
 ## TODO
 
 - tests
-- documentation
+- documentation (https://jsr.io/docs/writing-docs#symbol-documentation)
 - other useful methods
 - other useful monads (list, state, etc?)
 - ???

@@ -1,4 +1,3 @@
-import { errSym, ofSym, okSym, resultSym } from './symbols.ts'
 import { isNonNullable, isPromise } from './util.ts'
 import { None, type Option, Some } from './option.ts'
 import { Done, Fail, type Task } from './task.ts'
@@ -21,15 +20,12 @@ export type Result<T, E = unknown> = {
     unwrap: (message?: string) => NonNullable<T>
     unwrapOr: (alt: () => NonNullable<T>) => NonNullable<T>
     map: <T2>(f: (t: NonNullable<T>) => T2) => Result<NonNullable<T2>, E>
-    flatMap: <T2>(f: (t: NonNullable<T>) => Result<NonNullable<T2>, E>) => Result<NonNullable<T2>, E> // FlatMapFn<T, E>
+    flatMap: <T2>(f: (t: NonNullable<T>) => Result<NonNullable<T2>, E>) => Result<NonNullable<T2>, E>
     mapErr: <E2>(f: (e: E) => E2) => Result<NonNullable<T>, E2>
     some: () => Option<NonNullable<T>>
     done: () => Task<NonNullable<T>, E>
     toString: () => string
-    [resultSym]: true
-    [okSym]?: true
-    [errSym]?: true
-    [ofSym]: <T, E>(t: T) => T extends Promise<infer R> ? Promise<Result<NonNullable<R>, E>> : Result<NonNullable<T>, E>
+    of: <T, E>(t: T) => T extends Promise<infer R> ? Promise<Result<NonNullable<R>, E>> : Result<NonNullable<T>, E>
     [Symbol.iterator]: () => Iterator<Result<T, E>, T, any>
     __proto__: null
 }
@@ -59,9 +55,7 @@ export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
             return (yield res) as any
         },
         toString: () => `Ok(${JSON.stringify(t)})`,
-        [resultSym]: true,
-        [okSym]: true,
-        [ofSym]: ResultOf,
+        of: ResultOf,
         __proto__: null,
     }
     return Object.freeze(res)
@@ -84,9 +78,7 @@ export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
             return (yield res) as any
         },
         toString: () => `Err(${JSON.stringify(e)})`,
-        [resultSym]: true,
-        [errSym]: true,
-        [ofSym]: ResultOf,
+        of: ResultOf,
         __proto__: null,
     }
     return Object.freeze(res) as any
