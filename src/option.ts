@@ -2,7 +2,13 @@ import { isNonNullable } from './util.ts'
 import { Err, Ok, type Result } from './result.ts'
 import { Done, Fail, type Task } from './task.ts'
 
-export class UnwrapOptionError extends Error {
+/**
+ * Unwrapping an Option of the None variant throws this error
+ */
+export class UnwrapNoneError extends Error {
+    /**
+     * ctor, duh
+     */
     constructor(msg?: string) {
         super(msg ?? 'Unwrapped an Option of None')
     }
@@ -20,7 +26,7 @@ export type Option<T> = {
     isSome: () => boolean
     /**
      * Safely unwrap the option
-     * @param cases Callbacks for each variant. Optionally return a value from either variant of the option.
+     * @param cases Callbacks for each variant. Optionally return a value from either case.
      * @example import { OptionOf, identity } from 'jsr:@sj/dots'
      * const item = OptionOf(array.get(idx))
      *   .map(transformItem)
@@ -32,17 +38,48 @@ export type Option<T> = {
     switch: <T1, T2>(cases: { some: (t: NonNullable<T>) => T1; none: () => T2 }) => T1 | T2
     /**
      * Unwrap the Option
-     * @param message an optional message to UnwrapOptionError if the option is of the None variant
-     * @throws {UnwrapOptionError}
-     * @returns {NonNullable<T>} the value contained if the option is of the Some variant. Otherwise an {UnwrapOptionError} is thrown with the message provided
+     * @param message an optional message to UnwrapNoneError if the option is of the None variant
+     * @throws `UnwrapNoneError`
+     * @returns `NonNullable<T>` the value contained if the option is of the Some variant. Otherwise an `UnwrapNoneError` is thrown with the message provided
      */
     unwrap: (message?: string) => NonNullable<T>
+    /**
+     * Unwrap the option, providing a fallback value if the option is of the None variant.
+     * @param alt callback to create the fallback value if the option is of the None variant
+     */
     unwrapOr: (alt: () => T) => NonNullable<T>
+    /**
+     * Transform the value of the option if it is of the Some variant.
+     * @param f the transform function
+     * @returns a new Option if the option was of the Some variant, otherwise the same instance of None is returned
+     */
     map: <T2>(f: (t: NonNullable<T>) => T2) => Option<NonNullable<T2>>
+    /**
+     * Transform this option, if it is of the Somevariant, to a new option
+     * @param f the transform function
+     * @returns the new option if this option was of the Some variant, otherwise the same instance of None is returned
+     */
     flatMap: <T2>(f: (t: NonNullable<T>) => Option<NonNullable<T2>>) => Option<NonNullable<T2>>
+    /**
+     * Combine this option with another option
+     * @param t2 the other option
+     * @returns a new Option if both options where of the Some variant, otherwise the same instance of None is returned
+     */
     zip: <T2>(t2: Option<T2>) => Option<readonly [T, T2]>
+    /**
+     * Convert this option to a Result
+     * @param f callback to create the Error if this option i of the None variant
+     */
     okOr: <E>(f: () => E) => Result<NonNullable<T>, E>
-    done: () => Task<NonNullable<T>, Error>
+    /**
+     * Convert this option to a Task
+     * @param f the callback to create an error value for the Failed task if this option is of the None variant
+     * @returns a Done task if this option is of the Some variant, otherwise a Fail task will be created using the callback
+     */
+    done: <E>(f: () => E) => Task<NonNullable<T>, E>
+    /**
+     * Get a string representation of this Option.
+     */
     toString: () => string
     of: <T>(t: T) => Option<NonNullable<T>>
     [Symbol.iterator]: () => Iterator<Option<T>, T, any>
@@ -71,8 +108,9 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
         flatMap: (f) => f(t),
         zip: (t2) => t2.map((t2) => [t, t2] as const) as any,
         okOr: (_) => Ok(t),
-        done: () => Done(t),
+        done: (_) => Done(t),
         toString: () => `Some(${JSON.stringify(t)})`,
+
         of: OptionOf,
         [Symbol.iterator]: function* () {
             return (yield opt) as any
@@ -86,15 +124,16 @@ const _none: Option<NonNullable<any>> = Object.freeze({
     isSome: () => false,
     switch: (c) => c.none(),
     unwrap: (m) => {
-        throw new UnwrapOptionError(m)
+        throw new UnwrapNoneError(m)
     },
     unwrapOr: (f) => f(),
     map: (_) => _none as any,
     flatMap: (_) => _none as any,
     zip: (_) => _none as any,
     okOr: (f) => Err(f()),
-    done: () => Fail(new Error('Option was None')),
+    done: (f) => Fail(f()),
     toString: () => 'None',
+
     of: OptionOf,
     [Symbol.iterator]: function* () {
         return (yield _none) as any

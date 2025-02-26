@@ -14,17 +14,12 @@ export type TaskInit<T, E> = (
 /**
  * Extract the type of T from a TaskInit<T, E>
  */
-export type DoneTaskValue<TInit> = TInit extends TaskInit<infer T, any> ? T : never
+export type TaskValue<TInit> = TInit extends TaskInit<infer T, any> ? T : never
 
 /**
  * Extract the type of E from a TaskInit<T, E>
  */
-export type FailTaskError<TInit> = TInit extends TaskInit<any, infer E> ? E : never
-
-/**
- * Get the type Task<T, E> from a TaskInit
- */
-export type InitializedTask<TInit> = TInit extends TaskInit<infer T, infer E> ? Task<T, E> : never
+export type TaskError<TInit> = TInit extends TaskInit<any, infer E> ? E : never
 
 /**
  * As opposed to Promise, a Task is lazy, ie a task must be executed in a `Do` or converted to a `Promise` via either `ok()`, `unwrap()`, `unwrapOr(...)` or `fire()`.
@@ -36,7 +31,7 @@ export type Task<T, E = unknown> = {
      */
     map: <T2>(f: (t: NonNullable<T>) => T2) => Task<T2, E>
     /**
-     * Transofmr the value of a task into a new task, similar to Promise.then
+     * Transform the value of a task into a new task, similar to Promise.then
      */
     flatMap: <T2>(f: (t: T) => Task<T2, E>) => Task<T2, E>
     /**
