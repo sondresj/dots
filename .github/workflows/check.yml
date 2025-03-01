@@ -1,0 +1,30 @@
+name: Check
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Deno
+              # uses: denoland/setup-deno@v1
+              uses: denoland/setup-deno@61fe2df320078202e33d7d5ad347e7dcfa0e8f31 # v1.1.2
+              with:
+                  deno-version: v1.x
+
+            - name: Just setup
+              uses: extractions/setup-just@v2
+
+            - name: Check
+              run: just check
