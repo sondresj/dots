@@ -7,18 +7,8 @@ Fully typed Do-notation
 
 ## Example
 
-````typescript
+```typescript
 import { Do, Done, Fail, None, type Option, Some, taskify, TaskOf } from 'dots'
-
-const _taskFetch = taskify(fetch)
-const taskFetch: typeof _taskFetch = (...args) =>
-    _taskFetch(...args).mapFailure((err) => {
-        // Fetch rejected with no response from the uri
-        return new RequestError(500, {
-            message: (err as any)?.message ?? 'Unknown Error',
-            status: 'Unknown error',
-        }, Some(err as any))
-    })
 
 export class RequestError extends Error {
     constructor(
@@ -26,13 +16,24 @@ export class RequestError extends Error {
         public readonly content: {
             message: string
             status: string
-            body: any
+            body: Option<any>
         },
         public readonly inner: Option<Error>,
     ) {
         super(content.message)
     }
 }
+
+const _taskFetch = taskify(fetch)
+const taskFetch: typeof _taskFetch = (...args) =>
+    _taskFetch(...args).mapFailure((err) => {
+        // Fetch rejected with no response from the uri
+        return new RequestError(500, {
+            message: (err as any)?.message ?? 'Unknown Error',
+            status: 'Unknown',
+            body: None(),
+        }, Some(err as any))
+    })
 
 export const request = Do.bind(function* <T>(
     method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
@@ -48,10 +49,10 @@ export const request = Do.bind(function* <T>(
 
     const json = yield* TaskOf(response.json())
         .mapFailure((err) => {
-            // Fetch rejected with no response from the uri
             return new RequestError(500, {
-                message: (err as any)?.message ?? 'Invalid json response',
-                status: 'Unknown error',
+                message: (err as any)?.message ?? 'Invalid JSON Response',
+                status: 'Unknown',
+                body: None(), // could be response.text() instead
             }, Some(err as any))
         })
 
@@ -59,17 +60,12 @@ export const request = Do.bind(function* <T>(
         return Done<T, RequestError>(json as NonNullable<T>)
     }
 
-    // Assuming not-ok responses are well-formed json
-    return Fail<T, RequestError>(new RequestError(response.status, {body: json as any}, None()))
+    return Fail<T, RequestError>(
+        new RequestError(response.status, {
+            status: response.statusText,
+            message: 'Response indicated not OK',
+            body: json as any,
+        }, None()),
+    )
 })
 ```
-
-## TODO
-
-- tests
-- documentation (<https://jsr.io/docs/writing-docs#symbol-documentation>)
-- other useful methods
-- other useful monads (list, state, etc?)
-- ???
-- profit
-````
