@@ -1,6 +1,6 @@
 import { isNonNullable } from './util.ts'
-import { Err, Ok, type Result } from './result.ts'
-import { Done, Fail, type Task } from './task.ts'
+import { Result } from './result.ts'
+import { Task } from './task.ts'
 
 /**
  * Unwrapping an Option of the None variant throws this error
@@ -81,7 +81,6 @@ export type Option<T> = {
      * Get a string representation of this Option.
      */
     toString: () => string
-    of: <T>(t: T) => Option<NonNullable<T>>
     [Symbol.iterator]: () => Iterator<Option<T>, T, any>
     __proto__: null
 }
@@ -107,11 +106,10 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
         map: (f) => OptionOf(f(t)),
         flatMap: (f) => f(t),
         zip: (t2) => t2.map((t2) => [t, t2] as const) as any,
-        okOr: (_) => Ok(t),
-        done: (_) => Done(t),
+        okOr: (_) => Result.ok(t),
+        done: (_) => Task.done(t),
         toString: () => `Some(${JSON.stringify(t)})`,
 
-        of: OptionOf,
         [Symbol.iterator]: function* () {
             return (yield opt) as any
         },
@@ -130,11 +128,10 @@ const _none: Option<NonNullable<any>> = Object.freeze({
     map: (_) => _none as any,
     flatMap: (_) => _none as any,
     zip: (_) => _none as any,
-    okOr: (f) => Err(f()),
-    done: (f) => Fail(f()),
+    okOr: (f) => Result.err(f()),
+    done: (f) => Task.fail(f()),
     toString: () => 'None',
 
-    of: OptionOf,
     [Symbol.iterator]: function* () {
         return (yield _none) as any
     },
@@ -148,3 +145,15 @@ const _none: Option<NonNullable<any>> = Object.freeze({
 export const None = <T>(): Option<NonNullable<T>> => {
     return _none as any
 }
+
+/**
+ * Option group export
+ * TODO: Examples
+ *
+ * @module
+ */
+export const Option = {
+    of: OptionOf,
+    none: None,
+    some: Some,
+} as const

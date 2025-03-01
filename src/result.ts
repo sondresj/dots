@@ -1,6 +1,6 @@
 import { isNonNullable, isPromise } from './util.ts'
-import { None, type Option, Some } from './option.ts'
-import { Done, Fail, type Task } from './task.ts'
+import { Option } from './option.ts'
+import { Task } from './task.ts'
 
 /**
  * The error when a result was created with a nullish value
@@ -89,7 +89,6 @@ export type Result<T, E = unknown> = {
      * Get a string representation of this Result.
      */
     toString: () => string
-    of: <T, E>(t: T) => T extends Promise<infer R> ? Promise<Result<NonNullable<R>, E>> : Result<NonNullable<T>, E>
     [Symbol.iterator]: () => Iterator<Result<T, E>, T, any>
     __proto__: null
 }
@@ -123,13 +122,12 @@ export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
         map: (f) => ResultOf(f(t)) as any,
         flatMap: (f) => f(t),
         mapErr: (_) => res as any,
-        some: () => Some(t),
-        done: () => Done(t),
+        some: () => Option.some(t),
+        done: () => Task.done(t),
         [Symbol.iterator]: function* () {
             return (yield res) as any
         },
         toString: () => `Ok(${JSON.stringify(t)})`,
-        of: ResultOf,
         __proto__: null,
     }
     return Object.freeze(res)
@@ -149,14 +147,25 @@ export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
         map: (_) => res as any,
         flatMap: () => res as any,
         mapErr: (f) => Err(f(e)),
-        some: () => None(),
-        done: () => Fail(e),
+        some: () => Option.none(),
+        done: () => Task.fail(e),
         [Symbol.iterator]: function* () {
             return (yield res) as any
         },
         toString: () => `Err(${JSON.stringify(e)})`,
-        of: ResultOf,
         __proto__: null,
     }
     return Object.freeze(res) as any
 }
+
+/**
+ * Result group export
+ * TODO: Examples
+ *
+ * @module
+ */
+export const Result = {
+    of: ResultOf,
+    err: Err,
+    ok: Ok,
+} as const

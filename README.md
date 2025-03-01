@@ -8,7 +8,7 @@ Fully typed Do-notation
 ## Example
 
 ```typescript
-import { Do, Done, Fail, None, type Option, Some, taskify, TaskOf } from 'dots'
+import { Do, Done, Fail, None, type Option, Some, taskify, Task } from 'dots'
 
 export class RequestError extends Error {
     constructor(
@@ -47,7 +47,7 @@ export const request = Do.bind(function* <T>(
         body: method !== 'GET' ? JSON.stringify(body) : undefined,
     })
 
-    const json = yield* TaskOf(response.json())
+    const json = yield* Task.of(response.json())
         .mapFailure((err) => {
             return new RequestError(500, {
                 message: (err as any)?.message ?? 'Invalid JSON Response',

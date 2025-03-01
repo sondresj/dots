@@ -64,10 +64,6 @@ export type Task<T, E = unknown> = {
      */
     initializer: TaskInit<T, E>
     /**
-     * Task factory
-     */
-    of: <T, E>(init: TaskInit<T, E>) => Task<T, E>
-    /**
      * Yielder for Do-notation
      */
     [Symbol.iterator]: () => Iterator<Task<T, E>, T, any>
@@ -107,7 +103,6 @@ export const TaskOf = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T
         unwrapOr: (alt) => new Promise((resolve) => init((val) => resolve(val!), () => resolve(alt()!))),
         fire: () => new Promise((resolve) => init(() => resolve(void 0), () => resolve(void 0))),
 
-        of: TaskOf,
         initializer: init,
         [Symbol.iterator]: function* () {
             return (yield task) as any
@@ -127,3 +122,15 @@ export const Done = <T, E = unknown>(t: T): Task<T, E> => TaskOf((done) => done(
  * @param e the error to fail the task with
  */
 export const Fail = <T, E>(e: E): Task<T, E> => TaskOf((_, fail) => fail(e))
+
+/**
+ * Task group export
+ * TODO: Examples
+ *
+ * @module
+ */
+export const Task = {
+    of: TaskOf,
+    done: Done,
+    fail: Fail,
+} as const
