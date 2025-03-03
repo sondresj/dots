@@ -125,7 +125,7 @@ export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
         some: () => Option.some(t),
         done: () => Task.done(t),
         [Symbol.iterator]: function* () {
-            return (yield res) as any
+            return yield res
         },
         toString: () => `Ok(${JSON.stringify(t)})`,
         __proto__: null,
@@ -150,7 +150,7 @@ export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
         some: () => Option.none(),
         done: () => Task.fail(e),
         [Symbol.iterator]: function* () {
-            return (yield res) as any
+            return yield res
         },
         toString: () => `Err(${JSON.stringify(e)})`,
         __proto__: null,

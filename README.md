@@ -5,38 +5,49 @@
 Friendly monadic types inspired by Rust.
 Fully typed Do-notation
 
+## How does it work?
+
+Do notation in typescript is not natively supported, but can be achieved using generator functions.
+However, the typescript types for Generator and Iterator assumes the same type T is yielded from a generator,
+to work around this, we can yield a _yielder_ instead, which is a generator function that yields itself.
+This is why the monadic types here implements [Symbol.iterator] and also why the `yield*` operator is required in a do-block.
+
 ## Example
 
 ```typescript
-import { Do, Done, Fail, None, type Option, Some, taskify, Task } from 'dots'
+import { Do, Done, Fail, None, type Option, Some, taskify, Task } from "dots";
 
 export class RequestError extends Error {
     constructor(
         public readonly status: number,
         public readonly content: {
-            message: string
-            status: string
-            body: Option<any>
+            message: string;
+            status: string;
+            body: Option<any>;
         },
         public readonly inner: Option<Error>,
     ) {
-        super(content.message)
+        super(content.message);
     }
 }
 
-const _taskFetch = taskify(fetch)
+const _taskFetch = taskify(fetch);
 const taskFetch: typeof _taskFetch = (...args) =>
     _taskFetch(...args).mapFailure((err) => {
         // Fetch rejected with no response from the uri
-        return new RequestError(500, {
-            message: (err as any)?.message ?? 'Unknown Error',
-            status: 'Unknown',
-            body: None(),
-        }, Some(err as any))
-    })
+        return new RequestError(
+            500,
+            {
+                message: (err as any)?.message ?? "Unknown Error",
+                status: "Unknown",
+                body: None(),
+            },
+            Some(err as any),
+        );
+    });
 
 export const request = Do.bind(function* <T>(
-    method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+    method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
     uri: string,
     headers: Record<PropertyKey, any> = {},
     body: Record<PropertyKey, any> = {},
@@ -44,28 +55,35 @@ export const request = Do.bind(function* <T>(
     const response = yield* taskFetch(uri, {
         method,
         headers,
-        body: method !== 'GET' ? JSON.stringify(body) : undefined,
-    })
+        body: method !== "GET" ? JSON.stringify(body) : undefined,
+    });
 
-    const json = yield* Task.of(response.json())
-        .mapFailure((err) => {
-            return new RequestError(500, {
-                message: (err as any)?.message ?? 'Invalid JSON Response',
-                status: 'Unknown',
+    const json = yield* Task.of(response.json()).mapFailure((err) => {
+        return new RequestError(
+            500,
+            {
+                message: (err as any)?.message ?? "Invalid JSON Response",
+                status: "Unknown",
                 body: None(), // could be response.text() instead
-            }, Some(err as any))
-        })
+            },
+            Some(err as any),
+        );
+    });
 
     if (response.ok) {
-        return Done<T, RequestError>(json as NonNullable<T>)
+        return Done<T, RequestError>(json as NonNullable<T>);
     }
 
     return Fail<T, RequestError>(
-        new RequestError(response.status, {
-            status: response.statusText,
-            message: 'Response indicated not OK',
-            body: json as any,
-        }, None()),
-    )
-})
+        new RequestError(
+            response.status,
+            {
+                status: response.statusText,
+                message: "Response indicated not OK",
+                body: json as any,
+            },
+            None(),
+        ),
+    );
+});
 ```

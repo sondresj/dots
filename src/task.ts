@@ -105,7 +105,7 @@ export const TaskOf = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T
 
         initializer: init,
         [Symbol.iterator]: function* () {
-            return (yield task) as any
+            return yield task
         },
         __proto__: null,
     }

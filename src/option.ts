@@ -111,7 +111,7 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
         toString: () => `Some(${JSON.stringify(t)})`,
 
         [Symbol.iterator]: function* () {
-            return (yield opt) as any
+            return yield opt
         },
         __proto__: null,
     }
@@ -133,7 +133,7 @@ const _none: Option<NonNullable<any>> = Object.freeze({
     toString: () => 'None',
 
     [Symbol.iterator]: function* () {
-        return (yield _none) as any
+        return yield _none
     },
     __proto__: null,
 })
