@@ -44,7 +44,7 @@ export type Result<T, E = unknown> = {
      * @param f predicate
      * @returns true if this result is Ok and the predicate returns true, otherwise false
      */
-    isOkAnd: (f: (t: T) => boolean) => boolean
+    isOkAnd: (f: (t: NonNullable<T>) => boolean) => boolean
     /**
      * Safely unwrap the Result
      * @param cases Callbacks for each variant. Optionally return a value from either case.
@@ -124,7 +124,7 @@ setInstanceFor(Result, ResultSymbol)
 /**
  * Create a new result of the Ok variant
  * @param t
- * @returns
+ * @returns Ok(t)
  */
 export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
     const res: Result<NonNullable<T>, E> = {
@@ -177,7 +177,7 @@ export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
 
         // @ts-ignore private
         [ResultSymbol]: true,
-        [OkSymbol]: true,
+        [ErrSymbol]: true,
     }
     return Object.freeze(res)
 }

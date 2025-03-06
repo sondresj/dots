@@ -1,5 +1,5 @@
 import { assert } from '@std/assert'
-import { Task } from '../src/task.ts'
+import { Done, Fail, Task } from '../src/task.ts'
 import { describe } from './util.ts'
 
 describe('Task', (s) => {
@@ -28,6 +28,12 @@ describe('Task', (s) => {
                     fail: () => false,
                 }).unwrap(),
             )
+        })
+    })
+    s.describe('[hasInstance]', (s) => {
+        s.it('instanceof works for all variants', () => {
+            assert(Done(() => 1) instanceof Task)
+            assert(Fail(() => 1) instanceof Task)
         })
     })
 })

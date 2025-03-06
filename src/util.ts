@@ -18,6 +18,9 @@ export const isPromise = (p: unknown): p is Promise<unknown> =>
  */
 export const isNonNullable = <T>(value: T): value is NonNullable<T> => value !== null && value !== undefined
 
+/**
+ * Util used internaly to make an object returned from f with symbol s be true for the instanceof operator
+ */
 export const setInstanceFor = <T extends (...args: any[]) => any>(f: T, s: symbol): void => {
     if (Object.hasOwn(f as any, Symbol.hasInstance)) {
         return

@@ -103,6 +103,23 @@ describe('Iter', (s) => {
         })
     })
 
+    s.describe('zip', (s) => {
+        s.it('returns Iter of [a, b] yielding until one of a or b is done', () => {
+            const a = Iter.from([1, 2, 3])
+            const b = Iter.from([4, 5, 6, 7, 8])
+            const ab = a.zip(b).toArray()
+            const ba = b.zip(a).toArray()
+            const c = Iter.from([0, -1])
+            const abc = a.zip(b)
+                .zip(c)
+                .map(([[a, b], c]) => [a, b, c])
+                .toArray()
+            assertEquals(abc, [[1, 4, 0], [2, 5, -1]])
+            assertEquals(ab, [[1, 4], [2, 5], [3, 6]])
+            assertEquals(ba, [[4, 1], [5, 2], [6, 3]])
+        })
+    })
+
     s.describe('reduce', (s) => {
         s.it('reduces the iterator to R', () => {
             const r = Iter.from([1, 2, 3]).reduce((r, t) => r | 1 << t, 0)

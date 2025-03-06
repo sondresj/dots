@@ -19,6 +19,20 @@ const map = <T, T2>(f: (t: T) => T2) => {
     }
 }
 
+const zip = <T1, T2>(is: Iterable<T2>) => {
+    return function* (ts: Iterable<T1>): Generator<readonly [T1, T2], void, unknown> {
+        const genA = ts[Symbol.iterator]()
+        const genB = is[Symbol.iterator]()
+        let nextA = genA.next()
+        let nextB = genB.next()
+        while (!nextA.done && !nextB.done) {
+            yield [nextA.value, nextB.value]
+            nextA = genA.next()
+            nextB = genB.next()
+        }
+    }
+}
+
 const reduce = <T, R>(f: (r: R, t: T) => R, r: R) => {
     return (ts: Iterable<T>): R => {
         let res = r
@@ -70,10 +84,20 @@ const enumerate = <T>() => {
     }
 }
 
+const count = (ts: Iterable<any>): number => {
+    let count = 0
+    for (const _ of ts) count++
+    return count
+}
+
+/**
+ * An `Iter` is a lazily evaluated iterator of a an iterable, inspired by rust iterators.
+ */
 export type Iter<T> = {
     first: () => Option<NonNullable<T>>
     last: () => Option<NonNullable<T>>
     nth: (n: number) => Option<NonNullable<T>>
+    count: () => number
     skip: (n: number) => Iter<T>
     take: (n: number) => Iter<T>
     enumerate: () => Iter<readonly [i: number, t: T]>
@@ -81,6 +105,7 @@ export type Iter<T> = {
     map: <T2>(f: (t: T) => T2) => Iter<T2>
     flatMap: <T2>(f: (t: T) => Iter<T2>) => Iter<T2>
     reduce: <R>(f: (r: R, t: T) => R, r: R) => R
+    zip: <T2>(i: Iter<T2>) => Iter<readonly [T, T2]>
     toArray: () => T[]
     [Symbol.iterator]: () => Iterator<T, Iter<T>, any>
     __proto__: null
@@ -118,12 +143,14 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
                 }
                 return None()
             },
+            count: () => count(init()),
             skip: (n) => Iter(() => skip<T>(n)(init())),
             take: (n) => Iter(() => take<T>(n)(init())),
             enumerate: () => Iter(() => enumerate<T>()(init())),
             map: (f) => Iter(() => map(f)(init())),
             flatMap: (f) => Iter(() => flatMap(f)(init())),
             filter: (f) => Iter(() => filter(f)(init())),
+            zip: <I>(i: Iter<I>) => Iter(() => zip<T, I>(i)(init())),
             reduce: (f, r) => reduce(f, r)(init()),
             toArray: () => [...init()],
             *[Symbol.iterator]() {

@@ -34,7 +34,7 @@ export type Option<T> = {
      * @param f predicate
      * @returns true if the option is some and the predicate rturns true, otherwise false
      */
-    isSomeAnd: (f: (t: T) => boolean) => boolean
+    isSomeAnd: (f: (t: NonNullable<T>) => boolean) => boolean
 
     /**
      * Safely unwrap the option
