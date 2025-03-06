@@ -3,13 +3,6 @@ import * as util from '../src/util.ts'
 import { describe } from './util.ts'
 
 describe('util', (s) => {
-    s.describe('identity', (s) => {
-        s.it('returns the argument', () => {
-            const x = {}
-            assert(x == util.identity(x))
-        })
-    })
-
     s.describe('isNonNullable', () => {
         s.it('returns false for null and undefined', () => {
             assert(!util.isNonNullable(null))
@@ -57,6 +50,18 @@ describe('util', (s) => {
                     catch: (cb: () => any) => cb(),
                 }),
             )
+        })
+    })
+
+    s.describe('setInstanceFor', (s) => {
+        s.it('enables instanceof operator for objects returned by f', () => {
+            const Foo = Symbol()
+            const foo = () => {
+                return { x: 1, [Foo]: true }
+            }
+            util.setInstanceFor(foo, Foo)
+            assert(foo() instanceof foo, 'true')
+            assert(!({ x: 1 } instanceof foo), 'false')
         })
     })
 })

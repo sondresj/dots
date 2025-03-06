@@ -1,4 +1,4 @@
-import { Do, Done, Fail, None, type Option, Some, taskify, Task } from 'dots'
+import { Do, Done, Fail, None, type Option, Some, Task, taskify } from 'dots'
 
 export class RequestError extends Error {
     constructor(
@@ -37,7 +37,7 @@ export const request = Do.bind(function* <T>(
         body: method !== 'GET' ? JSON.stringify(body) : undefined,
     })
 
-    const json = yield* Task.of(response.json())
+    const json = yield* Task(response.json())
         .mapFailure((err) => {
             return new RequestError(500, {
                 message: (err as any)?.message ?? 'Invalid JSON Response',
@@ -54,7 +54,7 @@ export const request = Do.bind(function* <T>(
         new RequestError(response.status, {
             status: response.statusText,
             message: 'Response indicated not OK',
-            body: json as any,
+            body: Some(json),
         }, None()),
     )
 })
