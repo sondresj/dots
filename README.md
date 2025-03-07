@@ -3,8 +3,7 @@
 [![JSR](https://jsr.io/badges/@sj/dots)](https://jsr.io/@sj/dots) [![CI](https://github.com/sondresj/dots/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/sondresj/dots/actions/workflows/check.yml)
 
 Friendly monadic types inspired by Rust.
-Fully typed Do-notation.
-Misc functional programming utils (such as pipe and combine).
+Fully typed Do-notation and misc functional programming utils.
 
 > [!WARNING]
 > This project is still a work in progress, breaking changes is likely.

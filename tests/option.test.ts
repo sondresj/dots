@@ -6,6 +6,30 @@ const optEq = (left: Option<any>, right: Option<any>) => {
     assertEquals(left.toString(), right.toString())
 }
 
+describe('Monad laws of Option', s => {
+    s.test('left identity', () => {
+        const f = (n: number) => Some(n + 1)
+        const a = Option(1).flatMap(f)
+        const b = f(1)
+        assertEquals(a.unwrap(), b.unwrap())
+    })
+
+    s.test('right identity', () => {
+        const a = Some(1)
+        const b = a.flatMap(Option)
+        assertEquals(a.unwrap(), b.unwrap())
+    })
+
+    s.test('associativity', () => {
+        const f = (x: number) => Some(x + 2)
+        const g = (x: number) => Some(x * 2)
+        const o = Some(42)
+        const left = o.flatMap(f).flatMap(g)
+        const right = o.flatMap(x => f(x).flatMap(g))
+        assertEquals(left.unwrap(), right.unwrap())
+    })
+})
+
 describe('Option', (s) => {
     s.describe('map', (s) => {
         s.it('when Some, returns Some of the mapped value', () => {

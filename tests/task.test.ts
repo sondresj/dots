@@ -1,6 +1,30 @@
-import { assert } from '@std/assert'
+import { assert, assertEquals } from '@std/assert'
 import { Done, Fail, Task } from '../src/task.ts'
 import { describe } from './util.ts'
+
+describe('Monad laws of Task', s => {
+    s.test('left identity', () => {
+        const f = (n: number) => Done(n + 1)
+        const a = Task<number>((d) => d(1)).flatMap(f)
+        const b = f(1)
+        assertEquals(a.unwrap(), b.unwrap())
+    })
+
+    s.test('right identity', () => {
+        const a = Done(1)
+        const b = a.flatMap(Done)
+        assertEquals(a.unwrap(), b.unwrap())
+    })
+
+    s.test('associativity', () => {
+        const f = (x: number) => Done(x + 2)
+        const g = (x: number) => Done(x * 2)
+        const o = Done(42)
+        const left = o.flatMap(f).flatMap(g)
+        const right = o.flatMap(x => f(x).flatMap(g))
+        assertEquals(left.unwrap(), right.unwrap())
+    })
+})
 
 describe('Task', (s) => {
     s.describe('TaskOf', (s) => {

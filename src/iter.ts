@@ -268,3 +268,11 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
  */
 Iter.from = <T>(iterable: Iterable<T>) => Iter(() => iterable)
 setInstanceFor(Iter, IterSymbol)
+
+/**
+ * The unit constructor for iter
+ */
+Iter.of = <T>(item: T) =>
+    Iter(function* () {
+        yield item
+    })
