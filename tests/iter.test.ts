@@ -1,7 +1,6 @@
-import { assert } from '@std/assert/assert'
 import { Iter } from '../src/iter.ts'
 import { describe } from './util.ts'
-import { assertEquals, assertThrows } from '@std/assert'
+import { assert, assertEquals, assertThrows } from '@std/assert'
 
 describe('Iter', (s) => {
     s.it('is lazily evaluated', () => {
@@ -30,37 +29,79 @@ describe('Iter', (s) => {
     })
 
     s.describe('first', (s) => {
-        s.it('returns the first element', () => {
+        s.it('returns the first item', () => {
             assert(Iter.from([1, 2, 3]).first().unwrap() === 1)
         })
     })
 
     s.describe('last', (s) => {
-        s.it('returns the last element', () => {
+        s.it('returns the last item', () => {
             assert(Iter.from([1, 2, 3]).last().unwrap() === 3)
         })
     })
 
     s.describe('nth', (s) => {
-        s.it('returns the nth element', () => {
+        s.it('returns the nth item', () => {
             assert(Iter.from([1, 2, 3]).nth(1).unwrap() === 2)
         })
     })
 
+    s.describe('all', (s) => {
+        s.it('returns true if all items matches predicate', () => {
+            assert(Iter.from([1, 2, 3]).all((n) => n > 0))
+        })
+
+        s.it('returns false if one item does not match predicate', () => {
+            assert(!Iter.from([1, 2, 3]).all((n) => n !== 1))
+        })
+
+        s.it('early exits iterable', () => {
+            let yielded = 0
+            const iter = Iter(function* () {
+                while (yielded < 3) {
+                    yield yielded++
+                }
+            })
+            assert(!iter.all((n) => n === 0), 'only first item should match')
+            assertEquals(yielded, 2)
+        })
+    })
+
+    s.describe('any', (s) => {
+        s.it('returns true if any item matches predicate', () => {
+            assert(Iter.from([1, 2, 3]).any((n) => n === 2))
+        })
+
+        s.it('returns false if no item matches predicate', () => {
+            assert(!Iter.from([1, 2, 3]).any((n) => n > 3))
+        })
+
+        s.it('early exits iterable', () => {
+            let yielded = 0
+            const iter = Iter(function* () {
+                while (yielded < 3) {
+                    yield yielded++
+                }
+            })
+            assert(iter.any((n) => n === 1), 'only first item should match')
+            assertEquals(yielded, 2)
+        })
+    })
+
     s.describe('skip', (s) => {
-        s.it('returns elements after n', () => {
+        s.it('returns items after n', () => {
             assertEquals(Iter.from([1, 2, 3]).skip(1).toArray(), [2, 3])
         })
     })
 
     s.describe('take', (s) => {
-        s.it('returns the first n elements', () => {
+        s.it('returns the first n items', () => {
             assertEquals(Iter.from([1, 2, 3]).take(2).toArray(), [1, 2])
         })
     })
 
     s.describe('enumerate', (s) => {
-        s.it('returns elements togheter with its index', () => {
+        s.it('returns items togheter with its index', () => {
             assertEquals(Iter.from([1, 2, 3]).enumerate().toArray(), [[0, 1], [1, 2], [2, 3]])
         })
     })
@@ -80,7 +121,7 @@ describe('Iter', (s) => {
             assertThrows(() => mapped.nth(1))
         })
 
-        s.it('returns elements as returned by callback', () => {
+        s.it('returns items as returned by callback', () => {
             const mapped = [...Iter(() => [1, 2, 3]).map((n) => n * 2)]
             assertEquals(mapped, [2, 4, 6])
         })
