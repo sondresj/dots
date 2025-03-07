@@ -1,5 +1,7 @@
-import { isPromise } from './util.ts'
+import { isPromise, setInstanceFor } from './util.ts'
 import { Err, Ok, type Result } from './result.ts'
+
+const TaskSymbol = Symbol('dots.task')
 
 /**
  * The signature of a task initializer, similar to the Promise constructor
@@ -45,7 +47,9 @@ export type Task<T, E = unknown> = {
     /**
      * Switch on the outcomes of a task, optionally returning a value for the resulting task. The resulting task will never be of the Fail variant
      */
-    switch: <T1, T2>(cases: { done: (t: NonNullable<T>) => T1; fail: (err: E | null | undefined) => T2 }) => Task<T1 | T2, never>
+    switch: <T1, T2>(
+        cases: { done: (t: NonNullable<T>) => T1; fail: (err: E | null | undefined) => T2 },
+    ) => Task<T1 | T2, never>
     /**
      * Unwrap the task, converting it to a Promise<T>.
      */
@@ -75,9 +79,11 @@ export type Task<T, E = unknown> = {
  * @param f the function to convert
  * @returns a function with the same arguments as `f` that returns a Task
  */
-export const taskify = <F extends (...args: any[]) => Promise<any>, E = unknown>(f: F): (...args: Parameters<F>) => Task<ReturnType<F> extends Promise<infer T> ? T : never, E> => {
+export const taskify = <F extends (...args: any[]) => Promise<any>, E = unknown>(
+    f: F,
+): (...args: Parameters<F>) => Task<ReturnType<F> extends Promise<infer T> ? T : never, E> => {
     return (...args) =>
-        TaskOf((done, fail) => {
+        Task((done, fail) => {
             try {
                 f(...args).then(done, fail)
             } catch (err) {
@@ -90,47 +96,41 @@ export const taskify = <F extends (...args: any[]) => Promise<any>, E = unknown>
  * Create a new Task
  * @param initOrPromise either a task initializer or a Promise-like.
  */
-export const TaskOf = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T>): Task<T, E> => {
-    const init = isPromise(initOrPromise) ? (done: (value: T) => void, fail: (error: E) => void) => initOrPromise.then(done, fail) : initOrPromise
+export const Task = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T>): Task<T, E> => {
+    const init = isPromise(initOrPromise)
+        ? (done: (value: T) => void, fail: (error: E) => void) => initOrPromise.then(done, fail)
+        : initOrPromise
 
     const task: Task<T, E> = {
-        map: (f) => TaskOf((done, fail) => init((val) => done(f(val!)), fail)) as any,
-        flatMap: (f) => TaskOf((done, fail) => init((val) => f(val as any).initializer(done, fail), fail)),
-        mapFailure: (f) => TaskOf((done, fail) => init(done, (e) => fail(f(e)))) as any,
-        switch: (cases) => TaskOf((done) => init((val) => done(cases.done(val!)), (err) => done(cases.fail(err)))),
+        map: (f) => Task((done, fail) => init((val) => done(f(val!)), fail)) as any,
+        flatMap: (f) => Task((done, fail) => init((val) => f(val as any).initializer(done, fail), fail)),
+        mapFailure: (f) => Task((done, fail) => init(done, (e) => fail(f(e)))) as any,
+        switch: (cases) => Task((done) => init((val) => done(cases.done(val!)), (err) => done(cases.fail(err)))),
         ok: () => new Promise((resolve) => init((val) => resolve(Ok(val as any)), (err) => resolve(Err(err) as any))),
         unwrap: () => new Promise((resolve, reject) => init((val) => resolve(val!), (err) => reject(err))),
         unwrapOr: (alt) => new Promise((resolve) => init((val) => resolve(val!), () => resolve(alt()!))),
         fire: () => new Promise((resolve) => init(() => resolve(void 0), () => resolve(void 0))),
 
         initializer: init,
-        [Symbol.iterator]: function* () {
+        *[Symbol.iterator]() {
             return yield task
         },
         __proto__: null,
+
+        // @ts-ignore private
+        [TaskSymbol]: true,
     }
     return Object.freeze(task)
 }
+setInstanceFor(Task, TaskSymbol)
 
 /**
  * Create a task that will complete with the given value
  * @param t the value to complete the task with
  */
-export const Done = <T, E = unknown>(t: T): Task<T, E> => TaskOf((done) => done(t))
+export const Done = <T, E = unknown>(t: T): Task<T, E> => Task((done) => done(t))
 /**
  * Create a task that will fail with the given error
  * @param e the error to fail the task with
  */
-export const Fail = <T, E>(e: E): Task<T, E> => TaskOf((_, fail) => fail(e))
-
-/**
- * Task group export
- * TODO: Examples
- *
- * @module
- */
-export const Task = {
-    of: TaskOf,
-    done: Done,
-    fail: Fail,
-} as const
+export const Fail = <T, E>(e: E): Task<T, E> => Task((_, fail) => fail(e))

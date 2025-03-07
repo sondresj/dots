@@ -1,6 +1,10 @@
-import { isNonNullable } from './util.ts'
-import { Result } from './result.ts'
-import { Task } from './task.ts'
+import { isNonNullable, setInstanceFor } from './util.ts'
+import { Err, Ok, type Result } from './result.ts'
+import { Done, Fail, type Task } from './task.ts'
+
+const OptionSymbol = Symbol('dots.option')
+const NoneSymbol = Symbol('dots.none')
+const SomeSymbol = Symbol('dots.some')
 
 /**
  * Unwrapping an Option of the None variant throws this error
@@ -24,6 +28,14 @@ export type Option<T> = {
      * Returns `true` if this option is the `Some` variant, otherwise `false`
      */
     isSome: () => boolean
+
+    /**
+     * Check if this option is Some and the predicate `f` returns true for `t`
+     * @param f predicate
+     * @returns true if the option is some and the predicate rturns true, otherwise false
+     */
+    isSomeAnd: (f: (t: NonNullable<T>) => boolean) => boolean
+
     /**
      * Safely unwrap the option
      * @param cases Callbacks for each variant. Optionally return a value from either case.
@@ -78,6 +90,14 @@ export type Option<T> = {
      */
     done: <E>(f: () => E) => Task<NonNullable<T>, E>
     /**
+     * Apply a filter predicate `f` if the option is Some.
+     * If the predicate returns false, the option returned is None
+     * @param f predicate called if option is Some.
+     * @returns None if the predicate returns false or the option is None, otherwise Some
+     */
+    filter: (f: (t: NonNullable<T>) => boolean) => Option<T>
+
+    /**
      * Get a string representation of this Option.
      */
     toString: () => string
@@ -90,7 +110,8 @@ export type Option<T> = {
  * @param t the option value.
  * @returns `Some(t)` if `t` is not `null` or `undefined`, otherwise `None`
  */
-export const OptionOf = <T>(t: T): Option<NonNullable<T>> => isNonNullable(t) ? Some(t) : None()
+export const Option = <T>(t: T): Option<NonNullable<T>> => isNonNullable(t) ? Some(t) : None()
+setInstanceFor(Option, OptionSymbol)
 
 /**
  * Create an Option of the Some variant
@@ -100,26 +121,34 @@ export const OptionOf = <T>(t: T): Option<NonNullable<T>> => isNonNullable(t) ? 
 export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
     const opt: Option<NonNullable<T>> = {
         isSome: () => true,
+        isSomeAnd: (f) => f(t),
         switch: (c) => c.some(t),
         unwrap: (_) => t,
         unwrapOr: (_) => t,
-        map: (f) => OptionOf(f(t)),
+        map: (f) => Option(f(t)),
         flatMap: (f) => f(t),
         zip: (t2) => t2.map((t2) => [t, t2] as const) as any,
-        okOr: (_) => Result.ok(t),
-        done: (_) => Task.done(t),
+        okOr: (_) => Ok(t),
+        done: (_) => Done(t),
+        filter: (f) => f(t) ? opt : _none,
         toString: () => `Some(${JSON.stringify(t)})`,
 
-        [Symbol.iterator]: function* () {
+        *[Symbol.iterator]() {
             return yield opt
         },
         __proto__: null,
+
+        // @ts-ignore private
+        [OptionSymbol]: true,
+        [SomeSymbol]: true,
     }
     return Object.freeze(opt)
 }
+setInstanceFor(Some, SomeSymbol)
 
 const _none: Option<NonNullable<any>> = Object.freeze({
     isSome: () => false,
+    isSomeAnd: (_) => false,
     switch: (c) => c.none(),
     unwrap: (m) => {
         throw new UnwrapNoneError(m)
@@ -128,14 +157,19 @@ const _none: Option<NonNullable<any>> = Object.freeze({
     map: (_) => _none as any,
     flatMap: (_) => _none as any,
     zip: (_) => _none as any,
-    okOr: (f) => Result.err(f()),
-    done: (f) => Task.fail(f()),
+    okOr: (f) => Err(f()),
+    done: (f) => Fail(f()),
+    filter: (_) => _none as any,
     toString: () => 'None',
 
-    [Symbol.iterator]: function* () {
+    *[Symbol.iterator]() {
         return yield _none
     },
     __proto__: null,
+
+    // @ts-ignore private
+    [OptionSymbol]: true,
+    [NoneSymbol]: true,
 })
 
 /**
@@ -143,17 +177,6 @@ const _none: Option<NonNullable<any>> = Object.freeze({
  * @returns An Option of the None variant. Note, this is always returns the _same_ None instance
  */
 export const None = <T>(): Option<NonNullable<T>> => {
-    return _none as any
+    return _none
 }
-
-/**
- * Option group export
- * TODO: Examples
- *
- * @module
- */
-export const Option = {
-    of: OptionOf,
-    none: None,
-    some: Some,
-} as const
+setInstanceFor(None, NoneSymbol)

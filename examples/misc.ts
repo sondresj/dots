@@ -1,4 +1,4 @@
-import { None, type Option, OptionOf, Some } from 'dots'
+import { None, Option, Some } from 'dots'
 
 const parseNum = (s: string): Option<number> => {
     const maybeNum = Number(s)
@@ -13,5 +13,5 @@ const getNthNumber = (text: string, n: number): Option<number> => {
         .split(' ')
         .map(parseNum)
         .filter((n) => n.isSome())
-    return OptionOf(nums.at(n)).flatMap((opt) => opt)
+    return Option(nums.at(n)).flatMap((opt) => opt)
 }

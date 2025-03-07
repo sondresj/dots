@@ -1,5 +1,5 @@
-import { assert, assertEquals } from 'jsr:@std/assert'
-import { None, type Option, Some } from '../src/option.ts'
+import { assert, assertEquals, assertThrows } from 'jsr:@std/assert'
+import { None, Option, Some } from '../src/option.ts'
 import { describe } from './util.ts'
 
 const optEq = (left: Option<any>, right: Option<any>) => {
@@ -57,7 +57,38 @@ describe('Option', (s) => {
     s.describe('isSome', () => {})
     s.describe('done', () => {})
     s.describe('ok', () => {})
-    s.describe('okOr', () => {})
-    s.describe('unwrap', () => {})
-    s.describe('unwrapOr', () => {})
+    s.describe('okOr', () => {
+        s.it('returns Err(..) for none', () => {
+            assert(!None().okOr(() => '').isOk())
+        })
+        s.it('returns Ok(..) for some', () => {
+            assert(Some(1).okOr(() => '').isOkAnd((v) => v === 1))
+        })
+    })
+    s.describe('unwrap', () => {
+        s.it('throws for none', () => {
+            assertThrows(() => None().unwrap('oops'), 'oops')
+        })
+        s.it('returns t for some', () => {
+            assert(Some(1).unwrap() === 1)
+        })
+    })
+    s.describe('unwrapOr', (s) => {
+        s.it('returns alt for none', () => {
+            assert(None().unwrapOr(() => 1) === 1)
+        })
+        s.it('returns t for some', () => {
+            assert(Some<number>(1).unwrapOr(() => 0) === 1)
+        })
+    })
+    s.describe('[hasInstance]', (s) => {
+        s.it('instanceof works for all variants', () => {
+            assert(Some(1) instanceof Some)
+            assert(!(Some(1) instanceof None))
+            assert(!(None() instanceof Some))
+            assert(None() instanceof None)
+            assert(None() instanceof Option)
+            assert(Some(1) instanceof Option)
+        })
+    })
 })

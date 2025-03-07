@@ -62,7 +62,7 @@
  *         body: method !== 'GET' ? JSON.stringify(body) : undefined,
  *     })
  *
- *     const json = yield* Task.of(response.json())
+ *     const json = yield* Task(response.json())
  *         .mapFailure((err) => {
  *             return new RequestError(500, {
  *                 message: (err as any)?.message ?? 'Invalid JSON Response',
@@ -79,15 +79,19 @@
  *         new RequestError(response.status, {
  *             status: response.statusText,
  *             message: 'Response indicated not OK',
- *             body: json as any,
+ *             body: Some(json),
  *         }, None()),
  *     )
  * })
  * ```
+ *
+ * Note: Instances of Option, Result, Task and Iter are frozen (immutable) and are [null-prototype objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object#null-prototype_objects)
+ *
  * @module
  */
 export * from './result.ts'
 export * from './option.ts'
 export * from './task.ts'
-export * from './util.ts'
+export * from './iter.ts'
 export * from './do.ts'
+export * from './fp.ts'

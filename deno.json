@@ -1,6 +1,6 @@
 {
     "name": "@sj/dots",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "license": "MIT",
     "exports": "./src/mod.ts",
     "imports": {
@@ -11,7 +11,7 @@
         "singleQuote": true,
         "semiColons": false,
         "indentWidth": 4,
-        "lineWidth": 200,
+        "lineWidth": 120,
         "useTabs": false
     },
     "lint": {

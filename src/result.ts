@@ -1,6 +1,10 @@
-import { isNonNullable, isPromise } from './util.ts'
-import { Option } from './option.ts'
-import { Task } from './task.ts'
+import { isNonNullable, isPromise, setInstanceFor } from './util.ts'
+import { None, type Option, Some } from './option.ts'
+import { Done, Fail, type Task } from './task.ts'
+
+const ResultSymbol = Symbol('dots.result')
+const OkSymbol = Symbol('dots.ok')
+const ErrSymbol = Symbol('dots.err')
 
 /**
  * The error when a result was created with a nullish value
@@ -31,10 +35,16 @@ export class UnwrapResultError extends Error {
  */
 export type Result<T, E = unknown> = {
     /**
-     * Check if the Result is of the Ok variant
-     * @returns true if this result is of the Ok variant
+     * Check if the Result is Ok
+     * @returns true if this result Ok
      */
     isOk: () => boolean
+    /**
+     * Check if the Result is Ok and matches the predicate
+     * @param f predicate
+     * @returns true if this result is Ok and the predicate returns true, otherwise false
+     */
+    isOkAnd: (f: (t: NonNullable<T>) => boolean) => boolean
     /**
      * Safely unwrap the Result
      * @param cases Callbacks for each variant. Optionally return a value from either case.
@@ -98,40 +108,49 @@ export type Result<T, E = unknown> = {
  * @param t
  * @returns `Err(NullishResultValueError)` If `t` is null or undefined otherwise `Ok(t)`
  */
-export const ResultOf = <T, E>(t: T): T extends Promise<infer R> ? Promise<Result<NonNullable<R>, E>> : Result<NonNullable<T>, E> => {
+export const Result = <T, E>(
+    t: T,
+): T extends Promise<infer R> ? Promise<Result<NonNullable<R>, E>> : Result<NonNullable<T>, E> => {
     if (isNonNullable(t)) {
         if (isPromise(t)) {
-            return t.then(ResultOf).catch(Err) as any
+            return t.then(Result).catch(Err) as any
         }
         return Ok(t) as any
     }
     return Err(new NullishResultValueError()) as any
 }
+setInstanceFor(Result, ResultSymbol)
 
 /**
  * Create a new result of the Ok variant
  * @param t
- * @returns
+ * @returns Ok(t)
  */
 export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
     const res: Result<NonNullable<T>, E> = {
         isOk: () => true,
+        isOkAnd: (f) => f(t),
         switch: (cases) => cases.ok(t),
         unwrap: () => t,
         unwrapOr: (_) => t,
-        map: (f) => ResultOf(f(t)) as any,
+        map: (f) => Result(f(t)) as any,
         flatMap: (f) => f(t),
         mapErr: (_) => res as any,
-        some: () => Option.some(t),
-        done: () => Task.done(t),
-        [Symbol.iterator]: function* () {
+        some: () => Some(t),
+        done: () => Done(t),
+        *[Symbol.iterator]() {
             return yield res
         },
         toString: () => `Ok(${JSON.stringify(t)})`,
         __proto__: null,
+
+        // @ts-ignore private
+        [ResultSymbol]: true,
+        [OkSymbol]: true,
     }
     return Object.freeze(res)
 }
+setInstanceFor(Ok, OkSymbol)
 
 /**
  * Create a new result of the Err variant
@@ -139,6 +158,7 @@ export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
 export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
     const res: Result<NonNullable<T>, E> = {
         isOk: () => false,
+        isOkAnd: (_) => false,
         switch: (cases) => cases.err(e),
         unwrap: (m) => {
             throw new UnwrapResultError(m)
@@ -147,25 +167,18 @@ export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
         map: (_) => res as any,
         flatMap: () => res as any,
         mapErr: (f) => Err(f(e)),
-        some: () => Option.none(),
-        done: () => Task.fail(e),
-        [Symbol.iterator]: function* () {
+        some: () => None(),
+        done: () => Fail(e),
+        *[Symbol.iterator]() {
             return yield res
         },
         toString: () => `Err(${JSON.stringify(e)})`,
         __proto__: null,
-    }
-    return Object.freeze(res) as any
-}
 
-/**
- * Result group export
- * TODO: Examples
- *
- * @module
- */
-export const Result = {
-    of: ResultOf,
-    err: Err,
-    ok: Ok,
-} as const
+        // @ts-ignore private
+        [ResultSymbol]: true,
+        [ErrSymbol]: true,
+    }
+    return Object.freeze(res)
+}
+setInstanceFor(Err, ErrSymbol)
