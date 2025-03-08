@@ -122,6 +122,11 @@ export const Result = <T, E>(
 setInstanceFor(Result, ResultSymbol)
 
 /**
+ * Equivalent to Result(...)
+ */
+Result.of = Result
+
+/**
  * Create a new result of the Ok variant
  * @param t
  * @returns Ok(t)

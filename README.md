@@ -12,6 +12,12 @@ Fully typed Do-notation and misc functional programming utils.
 > [!NOTE]
 > Instances of Option, Result, Task and Iter are frozen (immutable) and are [null-prototype objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object#null-prototype_objects)
 
+## Yet another functional programming package??
+
+There is a lot of prior art similar to this package, such as [Effect-TS](https://effect.website/).
+DoTS aims to be pragmatic and provide a minimal api surface to get the job done with the lowest possible barrier of entry for developers new to the functional programming paradigm.
+However, you should probably use Effect-TS. It's an awesome library!
+
 ## How does it work?
 
 Do notation in typescript is not natively supported, but can be achieved using generator functions.
@@ -22,35 +28,39 @@ This is why the monadic types here implements [Symbol.iterator] and also why the
 ## Example
 
 ```typescript
-import { Do, Done, Fail, None, type Option, Some, Task, taskify } from 'dots'
+import { Do, Done, Fail, None, type Option, Some, Task, taskify } from "dots";
 
 export class RequestError extends Error {
     constructor(
         public readonly status: number,
         public readonly content: {
-            message: string
-            status: string
-            body: Option<any>
+            message: string;
+            status: string;
+            body: Option<any>;
         },
         public readonly inner: Option<Error>,
     ) {
-        super(content.message)
+        super(content.message);
     }
 }
 
-const _taskFetch = taskify(fetch)
+const _taskFetch = taskify(fetch);
 const taskFetch: typeof _taskFetch = (...args) =>
     _taskFetch(...args).mapFailure((err) => {
         // Fetch rejected with no response from the uri
-        return new RequestError(500, {
-            message: (err as any)?.message ?? 'Unknown Error',
-            status: 'Unknown',
-            body: None(),
-        }, Some(err as any))
-    })
+        return new RequestError(
+            500,
+            {
+                message: (err as any)?.message ?? "Unknown Error",
+                status: "Unknown",
+                body: None(),
+            },
+            Some(err as any),
+        );
+    });
 
 export const request = Do.bind(function* <T>(
-    method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+    method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
     uri: string,
     headers: Record<PropertyKey, any> = {},
     body: Record<PropertyKey, any> = {},
@@ -58,28 +68,35 @@ export const request = Do.bind(function* <T>(
     const response = yield* taskFetch(uri, {
         method,
         headers,
-        body: method !== 'GET' ? JSON.stringify(body) : undefined,
-    })
+        body: method !== "GET" ? JSON.stringify(body) : undefined,
+    });
 
-    const json = yield* Task(response.json())
-        .mapFailure((err) => {
-            return new RequestError(500, {
-                message: (err as any)?.message ?? 'Invalid JSON Response',
-                status: 'Unknown',
+    const json = yield* Task(response.json()).mapFailure((err) => {
+        return new RequestError(
+            500,
+            {
+                message: (err as any)?.message ?? "Invalid JSON Response",
+                status: "Unknown",
                 body: None(), // could be response.text() instead
-            }, Some(err as any))
-        })
+            },
+            Some(err as any),
+        );
+    });
 
     if (response.ok) {
-        return Done<T, RequestError>(json as NonNullable<T>)
+        return Done<T, RequestError>(json as NonNullable<T>);
     }
 
     return Fail<T, RequestError>(
-        new RequestError(response.status, {
-            status: response.statusText,
-            message: 'Response indicated not OK',
-            body: Some(json),
-        }, None()),
-    )
-})
+        new RequestError(
+            response.status,
+            {
+                status: response.statusText,
+                message: "Response indicated not OK",
+                body: Some(json),
+            },
+            None(),
+        ),
+    );
+});
 ```
