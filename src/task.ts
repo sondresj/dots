@@ -125,6 +125,11 @@ export const Task = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T>)
 setInstanceFor(Task, TaskSymbol)
 
 /**
+ * Equivalent to Task(...)
+ */
+Task.of = Task
+
+/**
  * Create a task that will complete with the given value
  * @param t the value to complete the task with
  */

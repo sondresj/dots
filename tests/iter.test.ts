@@ -2,6 +2,30 @@ import { Iter } from '../src/iter.ts'
 import { describe } from './util.ts'
 import { assert, assertEquals, assertThrows } from '@std/assert'
 
+describe('Monad laws of Iter', s => {
+    s.test('left identity', () => {
+        const f = (n: number) => Iter.of(n + 1)
+        const a = Iter.of(1).flatMap(f)
+        const b = f(1)
+        assertEquals(a.toArray(), b.toArray())
+    })
+
+    s.test('right identity', () => {
+        const a = Iter.of(1)
+        const b = a.flatMap(Iter.of)
+        assertEquals(a.toArray(), b.toArray())
+    })
+
+    s.test('associativity', () => {
+        const f = (x: number) => Iter.of(x + 2)
+        const g = (x: number) => Iter.of(x * 2)
+        const o = Iter.of(42)
+        const left = o.flatMap(f).flatMap(g)
+        const right = o.flatMap(x => f(x).flatMap(g))
+        assertEquals(left.toArray(), right.toArray())
+    })
+})
+
 describe('Iter', (s) => {
     s.it('is lazily evaluated', () => {
         let yielded = 0

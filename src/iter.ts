@@ -114,7 +114,6 @@ const count = (ts: Iterable<any>): number => {
 export type Iter<T> = {
     /**
      * Run the iter returning the first item it produces
-     * Get the first item
      * @returns Some of the first item the iter produces, or None if the iter produces nothing
      */
     first: () => Option<NonNullable<T>>
@@ -198,7 +197,7 @@ export type Iter<T> = {
      */
     zip: <T2>(i: Iter<T2>) => Iter<readonly [T, T2]>
     /**
-     * Run the iterator, collecting all items produced into an array
+     * Run the iter, collecting all items produced into an array
      */
     toArray: () => T[]
     [Symbol.iterator]: () => Iterator<T, Iter<T>, any>
@@ -269,3 +268,11 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
  */
 Iter.from = <T>(iterable: Iterable<T>) => Iter(() => iterable)
 setInstanceFor(Iter, IterSymbol)
+
+/**
+ * The unit constructor for iter
+ */
+Iter.of = <T>(item: T) =>
+    Iter(function* () {
+        yield item
+    })

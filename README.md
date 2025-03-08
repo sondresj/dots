@@ -3,7 +3,20 @@
 [![JSR](https://jsr.io/badges/@sj/dots)](https://jsr.io/@sj/dots) [![CI](https://github.com/sondresj/dots/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/sondresj/dots/actions/workflows/check.yml)
 
 Friendly monadic types inspired by Rust.
-Fully typed Do-notation
+Fully typed Do-notation and misc functional programming utils.
+
+> [!WARNING]
+> This project is still a work in progress, breaking changes is likely.
+> Semantic versioning does not necessarily apply until a 1.0 release
+
+> [!NOTE]
+> Instances of Option, Result, Task and Iter are frozen (immutable) and are [null-prototype objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object#null-prototype_objects)
+
+## Yet another functional programming package??
+
+There is a lot of prior art similar to this package, such as [Effect-TS](https://effect.website/).
+DoTS aims to be pragmatic and provide a minimal api surface to get the job done with the lowest possible barrier of entry for developers new to the functional programming paradigm.
+However, you should probably use Effect-TS. It's an awesome library!
 
 ## How does it work?
 
@@ -15,7 +28,7 @@ This is why the monadic types here implements [Symbol.iterator] and also why the
 ## Example
 
 ```typescript
-import { Do, Done, Fail, None, type Option, Some, taskify, Task } from "dots";
+import { Do, Done, Fail, None, type Option, Some, Task, taskify } from "dots";
 
 export class RequestError extends Error {
     constructor(
@@ -58,7 +71,7 @@ export const request = Do.bind(function* <T>(
         body: method !== "GET" ? JSON.stringify(body) : undefined,
     });
 
-    const json = yield* Task.of(response.json()).mapFailure((err) => {
+    const json = yield* Task(response.json()).mapFailure((err) => {
         return new RequestError(
             500,
             {
@@ -80,7 +93,7 @@ export const request = Do.bind(function* <T>(
             {
                 status: response.statusText,
                 message: "Response indicated not OK",
-                body: json as any,
+                body: Some(json),
             },
             None(),
         ),

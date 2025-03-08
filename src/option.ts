@@ -114,6 +114,11 @@ export const Option = <T>(t: T): Option<NonNullable<T>> => isNonNullable(t) ? So
 setInstanceFor(Option, OptionSymbol)
 
 /**
+ * Equivalent to Option(...)
+ */
+Option.of = Option
+
+/**
  * Create an Option of the Some variant
  * @param t the value of the Option
  * @returns an Option of the Some variant containing the value `t`
