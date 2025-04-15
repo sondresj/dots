@@ -47,7 +47,7 @@ const flatMap = function* <T, T2>(
     ts: Iterable<T>,
 ): Generator<T2, void, unknown> {
     for (const t of ts) {
-        for (const t2 of f(t)) {
+        for (const t2 of f(t).valueOf()) {
             yield t2
         }
     }
@@ -200,7 +200,8 @@ export type Iter<T> = {
      * Run the iter, collecting all items produced into an array
      */
     toArray: () => T[]
-    [Symbol.iterator]: () => Iterator<T, Iter<T>, any>
+    valueOf: () => Iterable<T>
+    [Symbol.iterator]: () => Iterator<Iter<T>, Iterable<T>, any>
     __proto__: null
 }
 
@@ -244,15 +245,18 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
             enumerate: () => Iter(() => enumerate<T>(init())),
             map: (f) => Iter(() => map(f, init())),
             flatMap: (f) => Iter(() => flatMap(f, init())),
+            // flatMap: (f) => Iter(function*(){}),
             filter: (f) => Iter(() => filter(f, init())),
-            zip: (i) => Iter(() => zip(init(), i)),
+            zip: (i) => Iter(() => zip(init(), i.valueOf())),
             reduce: (f, r) => reduce(f, r, init()),
             toArray: () => [...init()],
+            valueOf: () => init(),
             *[Symbol.iterator]() {
-                for (const t of init()) {
-                    yield t
-                }
-                return this
+                return yield this
+                // for (const t of init()) {
+                //     yield t
+                // }
+                // return this
             },
             __proto__: null,
             // @ts-ignore hidden

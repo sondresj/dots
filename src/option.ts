@@ -101,6 +101,7 @@ export type Option<T> = {
      * Get a string representation of this Option.
      */
     toString: () => string
+    valueOf: () => T | null | undefined
     [Symbol.iterator]: () => Iterator<Option<T>, T, any>
     __proto__: null
 }
@@ -137,6 +138,7 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
         done: (_) => Done(t),
         filter: (f) => f(t) ? opt : _none,
         toString: () => `Some(${JSON.stringify(t)})`,
+        valueOf: () => t,
 
         *[Symbol.iterator]() {
             return yield opt
@@ -151,31 +153,34 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
 }
 setInstanceFor(Some, SomeSymbol)
 
-const _none: Option<NonNullable<any>> = Object.freeze({
-    isSome: () => false,
-    isSomeAnd: (_) => false,
-    switch: (c) => c.none(),
-    unwrap: (m) => {
-        throw new UnwrapNoneError(m)
-    },
-    unwrapOr: (f) => f(),
-    map: (_) => _none as any,
-    flatMap: (_) => _none as any,
-    zip: (_) => _none as any,
-    okOr: (f) => Err(f()),
-    done: (f) => Fail(f()),
-    filter: (_) => _none as any,
-    toString: () => 'None',
+const _none: Option<NonNullable<any>> = Object.freeze(
+    {
+        isSome: () => false,
+        isSomeAnd: (_) => false,
+        switch: (c) => c.none(),
+        unwrap: (m) => {
+            throw new UnwrapNoneError(m)
+        },
+        unwrapOr: (f) => f(),
+        map: (_) => _none as any,
+        flatMap: (_) => _none as any,
+        zip: (_) => _none as any,
+        okOr: (f) => Err(f()),
+        done: (f) => Fail(f()),
+        filter: (_) => _none as any,
+        toString: () => 'None',
+        valueOf: () => undefined,
 
-    *[Symbol.iterator]() {
-        return yield _none
-    },
-    __proto__: null,
+        *[Symbol.iterator]() {
+            return yield _none
+        },
+        __proto__: null,
 
-    // @ts-ignore private
-    [OptionSymbol]: true,
-    [NoneSymbol]: true,
-})
+        // @ts-ignore private
+        [OptionSymbol]: true,
+        [NoneSymbol]: true,
+    } satisfies Option<any>,
+)
 
 /**
  * Create an Option of the None variant.

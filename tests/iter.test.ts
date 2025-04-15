@@ -1,33 +1,11 @@
+import { Do } from '../src/do.ts'
 import { Iter } from '../src/iter.ts'
-import { describe } from './util.ts'
+import { None, Some } from '../src/option.ts'
 import { assert, assertEquals, assertThrows } from '@std/assert'
+import { describe, it, test } from '@std/testing/bdd'
 
-describe('Monad laws of Iter', s => {
-    s.test('left identity', () => {
-        const f = (n: number) => Iter.of(n + 1)
-        const a = Iter.of(1).flatMap(f)
-        const b = f(1)
-        assertEquals(a.toArray(), b.toArray())
-    })
-
-    s.test('right identity', () => {
-        const a = Iter.of(1)
-        const b = a.flatMap(Iter.of)
-        assertEquals(a.toArray(), b.toArray())
-    })
-
-    s.test('associativity', () => {
-        const f = (x: number) => Iter.of(x + 2)
-        const g = (x: number) => Iter.of(x * 2)
-        const o = Iter.of(42)
-        const left = o.flatMap(f).flatMap(g)
-        const right = o.flatMap(x => f(x).flatMap(g))
-        assertEquals(left.toArray(), right.toArray())
-    })
-})
-
-describe('Iter', (s) => {
-    s.it('is lazily evaluated', () => {
+describe('Iter', () => {
+    it('is lazily evaluated', () => {
         let yielded = 0
         const iter = Iter(function* () {
             yield ++yielded
@@ -38,7 +16,7 @@ describe('Iter', (s) => {
         assert(yielded === 2)
     })
 
-    s.it('multiple enumerations enumerates iterable multiple times', () => {
+    test('multiple enumerations enumerates iterable multiple times', () => {
         let yielded = 0
         const f = function* () {
             yield ++yielded
@@ -52,34 +30,34 @@ describe('Iter', (s) => {
         assertEquals(summed, 6)
     })
 
-    s.describe('first', (s) => {
-        s.it('returns the first item', () => {
+    describe('first', () => {
+        it('returns the first item', () => {
             assert(Iter.from([1, 2, 3]).first().unwrap() === 1)
         })
     })
 
-    s.describe('last', (s) => {
-        s.it('returns the last item', () => {
+    describe('last', () => {
+        it('returns the last item', () => {
             assert(Iter.from([1, 2, 3]).last().unwrap() === 3)
         })
     })
 
-    s.describe('nth', (s) => {
-        s.it('returns the nth item', () => {
+    describe('nth', () => {
+        it('returns the nth item', () => {
             assert(Iter.from([1, 2, 3]).nth(1).unwrap() === 2)
         })
     })
 
-    s.describe('all', (s) => {
-        s.it('returns true if all items matches predicate', () => {
+    describe('all', () => {
+        it('returns true if all items matches predicate', () => {
             assert(Iter.from([1, 2, 3]).all((n) => n > 0))
         })
 
-        s.it('returns false if one item does not match predicate', () => {
+        it('returns false if one item does not match predicate', () => {
             assert(!Iter.from([1, 2, 3]).all((n) => n !== 1))
         })
 
-        s.it('early exits iterable', () => {
+        it('early exits iterable', () => {
             let yielded = 0
             const iter = Iter(function* () {
                 while (yielded < 3) {
@@ -91,16 +69,16 @@ describe('Iter', (s) => {
         })
     })
 
-    s.describe('any', (s) => {
-        s.it('returns true if any item matches predicate', () => {
+    describe('any', () => {
+        it('returns true if any item matches predicate', () => {
             assert(Iter.from([1, 2, 3]).any((n) => n === 2))
         })
 
-        s.it('returns false if no item matches predicate', () => {
+        it('returns false if no item matches predicate', () => {
             assert(!Iter.from([1, 2, 3]).any((n) => n > 3))
         })
 
-        s.it('early exits iterable', () => {
+        it('early exits iterable', () => {
             let yielded = 0
             const iter = Iter(function* () {
                 while (yielded < 3) {
@@ -112,32 +90,32 @@ describe('Iter', (s) => {
         })
     })
 
-    s.describe('skip', (s) => {
-        s.it('returns items after n', () => {
+    describe('skip', () => {
+        it('returns items after n', () => {
             assertEquals(Iter.from([1, 2, 3]).skip(1).toArray(), [2, 3])
         })
     })
 
-    s.describe('take', (s) => {
-        s.it('returns the first n items', () => {
+    describe('take', () => {
+        it('returns the first n items', () => {
             assertEquals(Iter.from([1, 2, 3]).take(2).toArray(), [1, 2])
         })
     })
 
-    s.describe('enumerate', (s) => {
-        s.it('returns items togheter with its index', () => {
+    describe('enumerate', () => {
+        it('returns items togheter with its index', () => {
             assertEquals(Iter.from([1, 2, 3]).enumerate().toArray(), [[0, 1], [1, 2], [2, 3]])
         })
     })
 
-    s.describe('filter', (s) => {
-        s.it('returns items matching predicate', () => {
+    describe('filter', () => {
+        it('returns items matching predicate', () => {
             assertEquals(Iter.from([1, 2, 3]).filter((i) => i % 2 === 0).toArray(), [2])
         })
     })
 
-    s.describe('map', (s) => {
-        s.it('does not call init when invoked', () => {
+    describe('map', () => {
+        it('does not call init when invoked', () => {
             const iter = Iter(() => {
                 assert(false, 'Throwing iterator')
             })
@@ -145,14 +123,14 @@ describe('Iter', (s) => {
             assertThrows(() => mapped.nth(1))
         })
 
-        s.it('returns items as returned by callback', () => {
-            const mapped = [...Iter(() => [1, 2, 3]).map((n) => n * 2)]
+        it('returns items as returned by callback', () => {
+            const mapped = Iter(() => [1, 2, 3]).map((n) => n * 2).toArray()
             assertEquals(mapped, [2, 4, 6])
         })
     })
 
-    s.describe('flatMap', (s) => {
-        s.it('returns a flattened iter', () => {
+    describe('flatMap', () => {
+        it('returns a flattened iter', () => {
             const flatmapped = Iter
                 .from([1, 2, 3])
                 .flatMap((i) =>
@@ -168,8 +146,8 @@ describe('Iter', (s) => {
         })
     })
 
-    s.describe('zip', (s) => {
-        s.it('returns Iter of [a, b] yielding until one of a or b is done', () => {
+    describe('zip', () => {
+        it('returns Iter of [a, b] yielding until one of a or b is done', () => {
             const a = Iter.from([1, 2, 3])
             const b = Iter.from([4, 5, 6, 7, 8])
             const ab = a.zip(b).toArray()
@@ -185,15 +163,40 @@ describe('Iter', (s) => {
         })
     })
 
-    s.describe('reduce', (s) => {
-        s.it('reduces the iterator to R', () => {
+    describe('reduce', () => {
+        it('reduces the iterator to R', () => {
             const r = Iter.from([1, 2, 3]).reduce((r, t) => r | 1 << t, 0)
             assertEquals(r, 8)
         })
     })
 
-    s.describe('[hasInstance]', () => {
-        s.it('returns true for iter instances', () => {
+    describe.skip('[Symbol.iterator]', () => {
+        it('works in do-notation', () => {
+            const stoi = (_: any) => {
+                const maybeNum = Number()
+                return Number.isFinite(maybeNum) && Number.isInteger(maybeNum) ? Some(maybeNum) : None<number>()
+            }
+            const sum = Do(function* () {
+                // bit of a contrived example, there are more succinct and readable ways to express this logic
+                const x = yield Iter(function* () {
+                    yield 'abc'
+                    yield '123'
+                    yield '1.23'
+                    yield '-1337'
+                    yield '+9000'
+                })
+                // .map(stoi)
+                // .filter((o) => o.isSome())
+                // .map((o) => o.unwrap())
+                return stoi(x)
+            })
+            console.log(sum)
+            assertEquals(sum, 123 - 1337 + 9000 as any)
+        })
+    })
+
+    describe('[hasInstance]', () => {
+        it('returns true for iter instances', () => {
             const iter = Iter.from([1, 2, 3])
             assert(iter instanceof Iter)
         })

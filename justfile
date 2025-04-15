@@ -10,3 +10,6 @@ check:
 
 watch:
     deno test ./tests --watch
+
+fix:
+    deno fmt && deno lint --fix

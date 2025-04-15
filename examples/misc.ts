@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 import { None, Option, Some } from 'dots'
 
 const parseNum = (s: string): Option<number> => {

@@ -66,7 +66,7 @@ export type Task<T, E = unknown> = {
     /**
      * Task initializer
      */
-    initializer: TaskInit<T, E>
+    valueOf: TaskInit<T, E>
     /**
      * Yielder for Do-notation
      */
@@ -103,15 +103,14 @@ export const Task = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T>)
 
     const task: Task<T, E> = {
         map: (f) => Task((done, fail) => init((val) => done(f(val!)), fail)) as any,
-        flatMap: (f) => Task((done, fail) => init((val) => f(val as any).initializer(done, fail), fail)),
+        flatMap: (f) => Task((done, fail) => init((val) => f(val as any).valueOf(done, fail), fail)),
         mapFailure: (f) => Task((done, fail) => init(done, (e) => fail(f(e)))) as any,
         switch: (cases) => Task((done) => init((val) => done(cases.done(val!)), (err) => done(cases.fail(err)))),
         ok: () => new Promise((resolve) => init((val) => resolve(Ok(val as any)), (err) => resolve(Err(err) as any))),
         unwrap: () => new Promise((resolve, reject) => init((val) => resolve(val!), (err) => reject(err))),
         unwrapOr: (alt) => new Promise((resolve) => init((val) => resolve(val!), () => resolve(alt()!))),
         fire: () => new Promise((resolve) => init(() => resolve(void 0), () => resolve(void 0))),
-
-        initializer: init,
+        valueOf: init,
         *[Symbol.iterator]() {
             return yield task
         },

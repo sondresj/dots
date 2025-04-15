@@ -99,6 +99,7 @@ export type Result<T, E = unknown> = {
      * Get a string representation of this Result.
      */
     toString: () => string
+    valueOf: () => T | E
     [Symbol.iterator]: () => Iterator<Result<T, E>, T, any>
     __proto__: null
 }
@@ -147,6 +148,7 @@ export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
             return yield res
         },
         toString: () => `Ok(${JSON.stringify(t)})`,
+        valueOf: () => t,
         __proto__: null,
 
         // @ts-ignore private
@@ -178,6 +180,7 @@ export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
             return yield res
         },
         toString: () => `Err(${JSON.stringify(e)})`,
+        valueOf: () => e,
         __proto__: null,
 
         // @ts-ignore private

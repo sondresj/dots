@@ -1,15 +1,15 @@
 import { assert } from '@std/assert'
 import * as util from '../src/util.ts'
-import { describe } from './util.ts'
+import { describe, it } from '@std/testing/bdd'
 
-describe('util', (s) => {
-    s.describe('isNonNullable', () => {
-        s.it('returns false for null and undefined', () => {
+describe('util', () => {
+    describe('isNonNullable', () => {
+        it('returns false for null and undefined', () => {
             assert(!util.isNonNullable(null))
             assert(!util.isNonNullable(undefined))
         })
 
-        s.it('returns true for any not nullish value', () => {
+        it('returns true for any not nullish value', () => {
             assert(util.isNonNullable(''))
             assert(util.isNonNullable([]))
             assert(util.isNonNullable({}))
@@ -18,20 +18,20 @@ describe('util', (s) => {
         })
     })
 
-    s.describe('isPromise', (s) => {
-        s.it('returns true for builtin promise', () => {
+    describe('isPromise', () => {
+        it('returns true for builtin promise', () => {
             assert(util.isPromise(Promise.resolve(1)))
             assert(util.isPromise(new Promise((res) => res(1))))
         })
 
-        s.it('returns true for promise-like', () => {
+        it('returns true for promise-like', () => {
             assert(util.isPromise({
                 then: (cb: () => any) => cb(),
                 catch: (cb: () => any) => cb(),
             }))
         })
 
-        s.it('returns false for promise-like ish', () => {
+        it('returns false for promise-like ish', () => {
             assert(
                 !util.isPromise({
                     then: true,
@@ -53,8 +53,8 @@ describe('util', (s) => {
         })
     })
 
-    s.describe('setInstanceFor', (s) => {
-        s.it('enables instanceof operator for objects returned by f', () => {
+    describe('setInstanceFor', () => {
+        it('enables instanceof operator for objects returned by f', () => {
             const Foo = Symbol()
             const foo = () => {
                 return { x: 1, [Foo]: true }
