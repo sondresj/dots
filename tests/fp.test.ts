@@ -1,5 +1,5 @@
 import { compose } from '../src/fp.ts'
-import { None, Some } from 'dots'
+import { None, Some } from '../src/mod.ts'
 import { assert } from '@std/assert'
 import { describe, it } from '@std/testing/bdd'
 
