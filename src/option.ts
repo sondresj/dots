@@ -84,6 +84,10 @@ export type Option<T> = {
      */
     okOr: <E>(f: () => E) => Result<NonNullable<T>, E>
     /**
+     * Returns this option if it is Some, otherwise return the provided option
+     */
+    or: (t2: Option<T>) => Option<T>
+    /**
      * Convert this option to a Task
      * @param f the callback to create an error value for the Failed task if this option is of the None variant
      * @returns a Done task if this option is of the Some variant, otherwise a Fail task will be created using the callback
@@ -135,6 +139,7 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
         flatMap: (f) => f(t),
         zip: (t2) => t2.map((t2) => [t, t2] as const) as any,
         okOr: (_) => Ok(t),
+        or: (_) => opt,
         done: (_) => Done(t),
         filter: (f) => f(t) ? opt : _none,
         toString: () => `Some(${JSON.stringify(t)})`,
@@ -166,6 +171,7 @@ const _none: Option<NonNullable<any>> = Object.freeze(
         flatMap: (_) => _none as any,
         zip: (_) => _none as any,
         okOr: (f) => Err(f()),
+        or: (o) => o,
         done: (f) => Fail(f()),
         filter: (_) => _none as any,
         toString: () => 'None',
