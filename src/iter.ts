@@ -201,7 +201,7 @@ export type Iter<T> = {
      */
     toArray: () => T[]
     valueOf: () => Iterable<T>
-    [Symbol.iterator]: () => Iterator<Iter<T>, Iterable<T>, any>
+    [Symbol.iterator]: () => Iterator<T, void, undefined>
     __proto__: null
 }
 
@@ -252,11 +252,9 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
             toArray: () => [...init()],
             valueOf: () => init(),
             *[Symbol.iterator]() {
-                return yield this
-                // for (const t of init()) {
-                //     yield t
-                // }
-                // return this
+                for (const t of init()) {
+                    yield t
+                }
             },
             __proto__: null,
             // @ts-ignore hidden

@@ -32,9 +32,15 @@ export type Option<T> = {
     /**
      * Check if this option is Some and the predicate `f` returns true for `t`
      * @param f predicate
-     * @returns true if the option is some and the predicate rturns true, otherwise false
+     * @returns true if the option is some and the predicate returns true, otherwise false
      */
     isSomeAnd: (f: (t: NonNullable<T>) => boolean) => boolean
+    /**
+     * Check if this option is None or the predicate `f` returns true for `t`
+     * @param f predicate
+     * @returns true if the option is none or the predicate returns true, otherwise false
+     */
+    isNoneOr: (f: (t: NonNullable<T>) => boolean) => boolean
 
     /**
      * Safely unwrap the option
@@ -59,7 +65,7 @@ export type Option<T> = {
      * Unwrap the option, providing a fallback value if the option is of the None variant.
      * @param alt callback to create the fallback value if the option is of the None variant
      */
-    unwrapOr: (alt: () => T) => NonNullable<T>
+    unwrapOr: (alt: () => NonNullable<T>) => NonNullable<T>
     /**
      * Transform the value of the option if it is of the Some variant.
      * @param f the transform function
@@ -86,7 +92,7 @@ export type Option<T> = {
     /**
      * Returns this option if it is Some, otherwise return the provided option
      */
-    or: (t2: Option<T>) => Option<T>
+    or: (alt: Option<T>) => Option<T>
     /**
      * Convert this option to a Task
      * @param f the callback to create an error value for the Failed task if this option is of the None variant
@@ -132,6 +138,7 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
     const opt: Option<NonNullable<T>> = {
         isSome: () => true,
         isSomeAnd: (f) => f(t),
+        isNoneOr: (f) => f(t),
         switch: (c) => c.some(t),
         unwrap: (_) => t,
         unwrapOr: (_) => t,
@@ -162,6 +169,7 @@ const _none: Option<NonNullable<any>> = Object.freeze(
     {
         isSome: () => false,
         isSomeAnd: (_) => false,
+        isNoneOr: (_) => true,
         switch: (c) => c.none(),
         unwrap: (m) => {
             throw new UnwrapNoneError(m)

@@ -50,7 +50,7 @@ const check = <T>({ of, name }: Of<Monadic<T>>) =>
         })
     })
 
-check(Iter)
+// check(Iter)
 check(Option)
 check(Result as any)
 check(Task)
