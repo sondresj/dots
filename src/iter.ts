@@ -245,7 +245,6 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
             enumerate: () => Iter(() => enumerate<T>(init())),
             map: (f) => Iter(() => map(f, init())),
             flatMap: (f) => Iter(() => flatMap(f, init())),
-            // flatMap: (f) => Iter(function*(){}),
             filter: (f) => Iter(() => filter(f, init())),
             zip: (i) => Iter(() => zip(init(), i.valueOf())),
             reduce: (f, r) => reduce(f, r, init()),
