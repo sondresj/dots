@@ -33,6 +33,7 @@ export type Range<Tag = unknown> = {
     readonly end: number
     readonly tag: Option<Tag>
 
+    // TODO: functor (map)?
     /**
      * If the tag is Some, map the tag and return a new range with the tag from the map result
      * If the tag is None, returns the same range instance
@@ -41,6 +42,7 @@ export type Range<Tag = unknown> = {
 
     /**
      * Return a new range as returned from `f`
+     * TODO: monadic signature?
      */
     flatMap: <T>(f: (start: number, end: number, tag: Option<Tag>) => Range<T>) => Range<T>
 

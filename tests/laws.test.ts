@@ -1,10 +1,10 @@
 import { assertEquals } from '@std/assert'
 import { Do } from '../src/do.ts'
 import { describe, test } from '@std/testing/bdd'
-import { Iter } from '../src/iter.ts'
 import { Option } from '../src/option.ts'
 import { Result } from '../src/result.ts'
 import { Task } from '../src/task.ts'
+import { State } from '../src/state.ts'
 
 type Monadic<T> = T extends {
     flatMap: (f: (v: any) => any) => any
@@ -54,3 +54,4 @@ const check = <T>({ of, name }: Of<Monadic<T>>) =>
 check(Option)
 check(Result as any)
 check(Task)
+check(State)
