@@ -25,4 +25,14 @@ describe('Do', () => {
         })
         assert(!res.isSome())
     })
+    it('does not exceed call stack size', () => {
+        const res = Do(function* () {
+            let sum = 0
+            for (let i = 0; i < 1e6; i++) {
+                sum += yield* Some(1)
+            }
+            return Some(sum)
+        })
+        assert(res.unwrap() === 1e6)
+    })
 })

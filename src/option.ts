@@ -1,6 +1,7 @@
 import { isNonNullable, setInstanceFor } from './util.ts'
 import { Err, Ok, type Result } from './result.ts'
 import { Done, Fail, type Task } from './task.ts'
+import type { Thunk } from './thunk.ts'
 
 const OptionSymbol = Symbol('dots.option')
 const NoneSymbol = Symbol('dots.none')
@@ -80,10 +81,15 @@ export type Option<T> = {
     flatMap: <T2>(f: (t: NonNullable<T>) => Option<NonNullable<T2>>) => Option<NonNullable<T2>>
     /**
      * Combine this option with another option
+     * AKA boolean 'and'
      * @param t2 the other option
      * @returns a new Option if both options where of the Some variant, otherwise the same instance of None is returned
      */
     zip: <T2>(t2: Option<T2>) => Option<readonly [T, T2]>
+    /**
+     * Inspect the value of the option
+     */
+    inspect: (f: (t: NonNullable<T>) => void) => Option<T>
     /**
      * Convert this option to a Result
      * @param f callback to create the Error if this option i of the None variant
@@ -92,7 +98,7 @@ export type Option<T> = {
     /**
      * Returns this option if it is Some, otherwise return the provided option
      */
-    or: (alt: Option<T>) => Option<T>
+    or: (alt: () => Option<T>) => Option<T>
     /**
      * Convert this option to a Task
      * @param f the callback to create an error value for the Failed task if this option is of the None variant
@@ -106,6 +112,12 @@ export type Option<T> = {
      * @returns None if the predicate returns false or the option is None, otherwise Some
      */
     filter: (f: (t: NonNullable<T>) => boolean) => Option<T>
+
+    /**
+     * convert this option to a thunk of the option.
+     * Useful for stack-safe recursive flatMap
+     */
+    thunk: <T2>(f: (t: NonNullable<T>) => Thunk<Option<T2>>) => Thunk<Option<T2>>
 
     /**
      * Get a string representation of this Option.
@@ -145,9 +157,14 @@ export const Some = <T>(t: NonNullable<T>): Option<NonNullable<T>> => {
         map: (f) => Option(f(t)),
         flatMap: (f) => f(t),
         zip: (t2) => t2.map((t2) => [t, t2] as const) as any,
+        inspect: (f) => {
+            f(t)
+            return opt
+        },
         okOr: (_) => Ok(t),
         or: (_) => opt,
         done: (_) => Done(t),
+        thunk: (f) => f(t),
         filter: (f) => f(t) ? opt : _none,
         toString: () => `Some(${JSON.stringify(t)})`,
         valueOf: () => t,
@@ -178,9 +195,11 @@ const _none: Option<NonNullable<any>> = Object.freeze(
         map: (_) => _none as any,
         flatMap: (_) => _none as any,
         zip: (_) => _none as any,
+        inspect: (_) => _none as any,
         okOr: (f) => Err(f()),
-        or: (o) => o,
+        or: (f) => f(),
         done: (f) => Fail(f()),
+        thunk: (_) => _none as any,
         filter: (_) => _none as any,
         toString: () => 'None',
         valueOf: () => undefined,

@@ -1,5 +1,6 @@
 import { isPromise, setInstanceFor } from './util.ts'
 import { Err, Ok, type Result } from './result.ts'
+import { Thunk, trampoline } from './thunk.ts'
 
 const TaskSymbol = Symbol('dots.task')
 
@@ -64,7 +65,13 @@ export type Task<T, E = unknown> = {
     fire: () => void
 
     /**
-     * Task initializer
+     * convert this task to a thunk of the task.
+     * Useful for stack-safe recursive flatMap
+     */
+    thunk: <T2>(f: (t: T) => Thunk<Task<T2, E>>) => Thunk<Task<T2, E>>
+
+    /**
+     h* Task initializer
      */
     valueOf: TaskInit<T, E>
     /**
@@ -110,6 +117,15 @@ export const Task = <T, E = unknown>(initOrPromise: TaskInit<T, E> | Promise<T>)
         unwrap: () => new Promise((resolve, reject) => init((val) => resolve(val!), (err) => reject(err))),
         unwrapOr: (alt) => new Promise((resolve) => init((val) => resolve(val!), () => resolve(alt()!))),
         fire: () => new Promise((resolve) => init(() => resolve(void 0), () => resolve(void 0))),
+        thunk: (f) => {
+            return Thunk.of(
+                Task((done, fail) =>
+                    init((val) =>
+                        trampoline(f)(val)
+                            .valueOf(done, fail), fail)
+                ),
+            )
+        },
         valueOf: init,
         *[Symbol.iterator]() {
             return yield task
