@@ -1,7 +1,7 @@
 import { isNonNullable, isPromise, setInstanceFor } from './util.ts'
 import { None, type Option, Some } from './option.ts'
 import { Done, Fail, type Task } from './task.ts'
-import type { Thunk } from './trampoline.ts'
+import type { Thunk } from './thunk.ts'
 
 const ResultSymbol = Symbol('dots.result')
 const OkSymbol = Symbol('dots.ok')

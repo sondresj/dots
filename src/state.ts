@@ -1,9 +1,20 @@
 import { setInstanceFor } from './util.ts'
-import { Thunk, trampoline } from './trampoline.ts'
+import { Thunk, trampoline } from './thunk.ts'
 
+/**
+ * The signature of a state monad initializer, similar to the Promise constructor
+ * @param s the state
+ * @returns a tuple of the new state and the value of the state
+ */
 export type RunState<S, A> = (s: S) => readonly [state: S, value: A]
-export type StateValue<S> = S extends State<any, infer V> ? V : never
-export type StateArg<S> = S extends State<infer A, any> ? A : never
+/**
+ * Extract the type of A from a State<S, A>
+ */
+export type StateValue<S> = S extends State<any, infer A> ? A : never
+/**
+ * Extract the type of S from a State<S, _>
+ */
+export type StateArg<S> = S extends State<infer S, any> ? S : never
 
 const StateSymbol = Symbol('dots.state')
 
@@ -26,6 +37,13 @@ export type State<S, A> = {
     __proto__: null
 }
 
+/**
+ * Create a new State monad.
+ * The State monad allows for pure functions to operate with some "global"/"external" state `S`
+ * which has an effect on the functions returned value.
+ * @param run
+ * @returns
+ */
 export const State = <S, A>(run: RunState<S, A>): State<S, A> => {
     const state: State<S, A> = {
         run,

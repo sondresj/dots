@@ -5,13 +5,16 @@ import { Option } from '../src/option.ts'
 import { Result } from '../src/result.ts'
 import { Task } from '../src/task.ts'
 import { State } from '../src/state.ts'
+import type { Thunk } from '../src/thunk.ts'
 
 type Monadic<T> = T extends {
     flatMap: (f: (v: any) => any) => any
     map: (f: (v: any) => any) => any
+    thunk: (f: (t: any) => Thunk<any>) => Thunk<any>
     [Symbol.iterator](): Iterator<any, any, any>
 } ? T
     : never
+
 type Of<T> = ((arg: any) => T) & {
     of: (arg: any) => T
 }

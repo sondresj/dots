@@ -1,6 +1,6 @@
 import { isPromise, setInstanceFor } from './util.ts'
 import { Err, Ok, type Result } from './result.ts'
-import { Thunk, trampoline } from './trampoline.ts'
+import { Thunk, trampoline } from './thunk.ts'
 
 const TaskSymbol = Symbol('dots.task')
 

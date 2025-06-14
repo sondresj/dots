@@ -2,7 +2,7 @@
 // https://gist.github.com/nythrox/bb369026dcecf710233582e7cbe1955b
 // The following is an adaptation of his work
 
-import { Thunk, trampoline } from './trampoline.ts'
+import { Thunk, trampoline } from './thunk.ts'
 
 type Monadic = {
     flatMap: (t: any) => any

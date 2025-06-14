@@ -1,7 +1,7 @@
 import { isNonNullable, setInstanceFor } from './util.ts'
 import { Err, Ok, type Result } from './result.ts'
 import { Done, Fail, type Task } from './task.ts'
-import type { Thunk } from './trampoline.ts'
+import type { Thunk } from './thunk.ts'
 
 const OptionSymbol = Symbol('dots.option')
 const NoneSymbol = Symbol('dots.none')
