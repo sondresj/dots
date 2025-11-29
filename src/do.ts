@@ -5,7 +5,7 @@
 import { Thunk, trampoline } from './thunk.ts'
 
 type Monadic = {
-    flatMap: (t: any) => any
+    flatMap: (f: (t: any) => any) => any
     thunk: (f: (t: any) => Thunk<any>) => Thunk<any>
 }
 
