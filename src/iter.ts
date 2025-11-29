@@ -71,6 +71,26 @@ const take = function* <T>(n: number, ts: Iterable<T>): Generator<T, void, unkno
     }
 }
 
+const takeWhile = function* <T>(pred: (t: T) => boolean, ts: Iterable<T>): Generator<T, Iter<T>, unknown> {
+    let firstWherePredReturnedFalse = null as T | null
+    for (const t of ts) {
+        if (pred(t)) yield t
+        else {
+            firstWherePredReturnedFalse = t
+            break
+        }
+    }
+
+    return Iter(function* () {
+        if (firstWherePredReturnedFalse !== null) {
+            yield firstWherePredReturnedFalse
+        }
+        for (const t of ts) {
+            yield t
+        }
+    })
+}
+
 const enumerate = function* <T>(ts: Iterable<T>): Generator<readonly [number, T], void, unknown> {
     let i = 0
     for (const t of ts) {
@@ -173,6 +193,8 @@ export type Iter<T> = {
      * @returns An iter with only the first n items
      */
     take: (n: number) => Iter<T>
+    /** */
+    takeWhile: (p: (t: T) => boolean) => Generator<T, Iter<T>, unknown>
     /**
      * Create a new iter where each item is numbered.
      * Note the `i` is not necessarily the items index in the source iterable
@@ -257,6 +279,7 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
             count: () => count(init()),
             skip: (n) => Iter(() => skip<T>(n, init())),
             take: (n) => Iter(() => take<T>(n, init())),
+            takeWhile: (p) => takeWhile(p, init()),
             enumerate: () => Iter(() => enumerate<T>(init())),
             map: (f) => Iter(() => map(f, init())),
             flatMap: (f) => Iter(() => flatMap(f, init())),

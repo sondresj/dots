@@ -7,8 +7,7 @@ const RangeSymbol = Symbol('dots.range')
 /**
  * A single slice of a range as yielded from Range.slice
  */
-export type Slice<ATag, BTag> = [ATag] extends [never] ? Range<readonly Range<BTag>[]>
-    : Range<readonly [ATag, ...Range<BTag>[]]>
+export type Slice<ATag, BTag> = Range<readonly [Option<ATag>, ...Range<BTag>[]]>
 
 /**
  * Represents a range defined by a start and an end value, where the start is inclusive
@@ -79,9 +78,7 @@ export type Range<Tag = unknown> = {
     intersects: (r: Range<any>) => boolean
     cmp: (r: Range<any>) => number
     split: (n: number) => Option<readonly [Range<Tag>, Range<Tag>]>
-    slice: <T2>(
-        r: readonly Range<T2>[],
-    ) => Generator<Slice<Tag, T2>, void, undefined>
+    slice: <T2>(r: readonly Range<T2>[]) => Generator<Slice<Tag, T2>, void, undefined>
     valueOf: () => readonly [start: number, end: number, tag?: Tag | null]
     toString: () => string
     __proto__: null
@@ -208,11 +205,6 @@ export function* slice<T, T2 = T>(
 
         const intersections = ranges.filter((r) => r.intersects(slice))
 
-        yield slice.withTag(
-            range.tag.switch({
-                some: (tag) => [tag, ...intersections] as const,
-                none: () => intersections,
-            }) as any,
-        )
+        yield slice.withTag([range.tag, ...intersections] as const) satisfies Slice<T, T2>
     }
 }
