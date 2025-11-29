@@ -1,6 +1,4 @@
-import { Do } from '../src/do.ts'
 import { Iter } from '../src/iter.ts'
-import { None, Some } from '../src/option.ts'
 import { assert, assertEquals, assertThrows } from '@std/assert'
 import { describe, it, test } from '@std/testing/bdd'
 
@@ -171,27 +169,27 @@ describe('Iter', () => {
     })
 
     describe.skip('[Symbol.iterator]', () => {
-        it('works in do-notation', () => {
-            const stoi = (_: any) => {
-                const maybeNum = Number()
-                return Number.isFinite(maybeNum) && Number.isInteger(maybeNum) ? Some(maybeNum) : None<number>()
-            }
-            const sum = Do(function* () {
-                // bit of a contrived example, there are more succinct and readable ways to express this logic
-                const x = yield Iter(function* () {
-                    yield 'abc'
-                    yield '123'
-                    yield '1.23'
-                    yield '-1337'
-                    yield '+9000'
-                })
-                // .map(stoi)
-                // .filter((o) => o.isSome())
-                // .map((o) => o.unwrap())
-                return stoi(x)
-            })
-            console.log(sum)
-            assertEquals(sum, 123 - 1337 + 9000 as any)
+        it.skip('works in do-notation', () => {
+            // const stoi = (_: any) => {
+            //     const maybeNum = Number()
+            //     return Number.isFinite(maybeNum) && Number.isInteger(maybeNum) ? Some(maybeNum) : None<number>()
+            // }
+            // const sum = Do(function* () {
+            //     // bit of a contrived example, there are more succinct and readable ways to express this logic
+            //     const x = yield Iter(function* () {
+            //         yield 'abc'
+            //         yield '123'
+            //         yield '1.23'
+            //         yield '-1337'
+            //         yield '+9000'
+            //     })
+            //     // .map(stoi)
+            //     // .filter((o) => o.isSome())
+            //     // .map((o) => o.unwrap())
+            //     return stoi(x)
+            // })
+            // console.log(sum)
+            // assertEquals(sum, 123 - 1337 + 9000 as any)
         })
     })
 

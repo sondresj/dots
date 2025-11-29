@@ -2,6 +2,13 @@
 // https://gist.github.com/nythrox/bb369026dcecf710233582e7cbe1955b
 // The following is an adaptation of his work
 
+import { Thunk, trampoline } from './thunk.ts'
+
+type Monadic = {
+    flatMap: (f: (t: any) => any) => any
+    thunk: (f: (t: any) => Thunk<any>) => Thunk<any>
+}
+
 type GeneratorReturn<T> = T extends Generator<any, infer R, any> ? R : never
 
 /**
@@ -18,23 +25,19 @@ type GeneratorReturn<T> = T extends Generator<any, infer R, any> ? R : never
  * @return returns the returned monad from the do block, or the Err/None/Fail/etc. if one occured
  */
 export const Do = <
-    TMonadic extends { flatMap: (t: any) => any },
-    TReturn extends { flatMap: (t: any) => any },
+    TMonadic extends Monadic,
+    TReturn extends Monadic,
     Scope extends () => Generator<TMonadic, TReturn, any>,
 >(fun: Scope): GeneratorReturn<ReturnType<Scope>> => {
     const gen = fun()
     const state = gen.next()
 
-    function run(s: typeof state): any {
-        if (s.done) {
-            return s.value
-        }
-        return s.value.flatMap((val: any) => {
-            return run(gen.next(val))
-        })
-    }
+    const run = Thunk((s: typeof state): any => {
+        if (s.done) return s.value
+        return s.value.thunk((val: any) => run(gen.next(val)))
+    })
 
-    return run(state)
+    return trampoline(run)(state)
 }
 
 /**
@@ -44,8 +47,8 @@ export const Do = <
  * @returns a function with the same parameters that returns the monad (not the monad generator)
  */
 Do.bind = <
-    TMonadic extends { flatMap: (t: any) => any },
-    TReturn extends { flatMap: (t: any) => any },
+    TMonadic extends Monadic,
+    TReturn extends Monadic,
     F extends (...args: any[]) => Generator<TMonadic, TReturn, any>,
 >(f: F) => {
     type Scope = () => ReturnType<F>

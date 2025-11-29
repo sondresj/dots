@@ -78,6 +78,16 @@ const enumerate = function* <T>(ts: Iterable<T>): Generator<readonly [number, T]
     }
 }
 
+const unique = function* <T>(ts: Iterable<T>): Generator<T, void, unknown> {
+    const seen = new Set<T>()
+    for (const t of ts) {
+        if (!seen.has(t)) {
+            seen.add(t)
+            yield t
+        }
+    }
+}
+
 const all = <T>(f: (t: T) => boolean, ts: Iterable<T>): boolean => {
     for (const t of ts) {
         if (!f(t)) return false
@@ -128,6 +138,10 @@ export type Iter<T> = {
      * @returns Some of the nth item the iter produces, or None if the iter produces nothing
      */
     nth: (n: number) => Option<NonNullable<T>>
+    /**
+     * Filter only unique items
+     */
+    unique: () => Iter<T>
     /**
      * Run the iterator until any item produced does not match the predicate.
      * Note: if the iter contains no items, true is returned
@@ -237,6 +251,7 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
                 }
                 return None()
             },
+            unique: () => Iter(() => unique(init())),
             all: (f) => all(f, init()),
             any: (f) => any(f, init()),
             count: () => count(init()),
@@ -245,7 +260,6 @@ export const Iter = <T>(init: () => Iterable<T>): Iter<T> => {
             enumerate: () => Iter(() => enumerate<T>(init())),
             map: (f) => Iter(() => map(f, init())),
             flatMap: (f) => Iter(() => flatMap(f, init())),
-            // flatMap: (f) => Iter(function*(){}),
             filter: (f) => Iter(() => filter(f, init())),
             zip: (i) => Iter(() => zip(init(), i.valueOf())),
             reduce: (f, r) => reduce(f, r, init()),

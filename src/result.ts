@@ -1,6 +1,7 @@
 import { isNonNullable, isPromise, setInstanceFor } from './util.ts'
 import { None, type Option, Some } from './option.ts'
 import { Done, Fail, type Task } from './task.ts'
+import type { Thunk } from './thunk.ts'
 
 const ResultSymbol = Symbol('dots.result')
 const OkSymbol = Symbol('dots.ok')
@@ -88,6 +89,18 @@ export type Result<T, E = unknown> = {
      */
     mapErr: <E2>(f: (e: E) => E2) => Result<NonNullable<T>, E2>
     /**
+     * Inspect the value of the result
+     * @param f
+     * @returns the same result
+     */
+    inspect: (f: (t: NonNullable<T>) => void) => Result<NonNullable<T>, E>
+    /**
+     * Inspect the error of the result
+     * @param f
+     * @returns the same result
+     */
+    inspectErr: (f: (e: E) => void) => Result<NonNullable<T>, E>
+    /**
      * Convert this Result to an Option
      */
     some: () => Option<NonNullable<T>>
@@ -95,6 +108,11 @@ export type Result<T, E = unknown> = {
      * Convert this result to a Task
      */
     done: () => Task<NonNullable<T>, E>
+    /**
+     * convert this result to a thunk of the result.
+     * Useful for stack-safe recursive flatMap
+     */
+    thunk: <T2>(f: (t: NonNullable<T>) => Thunk<Result<T2, E>>) => Thunk<Result<T2, E>>
     /**
      * Get a string representation of this Result.
      */
@@ -142,8 +160,14 @@ export const Ok = <T, E>(t: NonNullable<T>): Result<NonNullable<T>, E> => {
         map: (f) => Result(f(t)) as any,
         flatMap: (f) => f(t),
         mapErr: (_) => res as any,
+        inspect: (f) => {
+            f(t)
+            return res
+        },
+        inspectErr: (_) => res as any,
         some: () => Some(t),
         done: () => Done(t),
+        thunk: (f) => f(t),
         *[Symbol.iterator]() {
             return yield res
         },
@@ -174,8 +198,14 @@ export const Err = <T, E>(e: E): Result<NonNullable<T>, E> => {
         map: (_) => res as any,
         flatMap: () => res as any,
         mapErr: (f) => Err(f(e)),
+        inspect: (_) => res as any,
+        inspectErr: (f) => {
+            f(e)
+            return res
+        },
         some: () => None(),
         done: () => Fail(e),
+        thunk: () => res as any,
         *[Symbol.iterator]() {
             return yield res
         },
